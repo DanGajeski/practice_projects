@@ -110,5 +110,6 @@ draw_y_line()
 main_line_endpoint_x, main_line_endpoint_y = draw_main_line()
 draw_cosine_line(main_line_endpoint_x, main_line_endpoint_y)
 draw_sine_line(main_line_endpoint_x, main_line_endpoint_y)
+print("TEST TEXT FOR GITHUB UPLOAD")
 
 root.mainloop()
