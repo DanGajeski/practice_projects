@@ -358,6 +358,9 @@ canvas.pack(fill="both", expand=True)
 unit_circle = ucc.Unit_circle(canvas, args.theta)
 unit_circle.draw()
 
+# while True:
+# unit_circle.draw()
+root.mainloop()
 # unit_circle.draw_title()
 # unit_circle.draw_unit_circle()
 # unit_circle.draw_x_line()
@@ -375,4 +378,4 @@ unit_circle.draw()
 # draw_sine_line_and_text(main_line_endpoint_x, main_line_endpoint_y)
 # print("TEST TEXT FOR GITHUB UPLOAD")
 
-root.mainloop()
+# root.mainloop()

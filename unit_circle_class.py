@@ -1,5 +1,5 @@
-# import tkinter as tk
 import math
+import tkinter as tk
 
 
 class Unit_circle:
@@ -17,6 +17,14 @@ class Unit_circle:
         # used for sin line
         self.main_line_endpoint_y = 0
 
+        self.theta_slider = self.create_slider()
+        self.theta_slider_value = (
+            self.theta_slider.get()
+        )  # get initial value of theta slider
+
+        # create slider window and slider scale object to modify theta values
+        self.create_slider_window()
+
     def draw_title(self) -> None:  # draws title text centered
         self.canvas.create_text(
             self.title_x_location,
@@ -26,6 +34,7 @@ class Unit_circle:
             justify="center",
             fill="black",
             anchor="center",
+            tags=("title_tag"),
         )
 
     def draw_unit_circle(self) -> None:  # draws main unit circle
@@ -37,6 +46,7 @@ class Unit_circle:
             fill="white",
             outline="black",
             width=2,
+            tags=("unit_circle_tag"),
         )
 
     def draw_x_line(self) -> None:  # draws unit circle x line
@@ -47,6 +57,7 @@ class Unit_circle:
             self.circle_origin_y,
             fill="black",
             width="1",
+            tags=("x_line_tag"),
         )
 
     def draw_y_line(self) -> None:  # draws unit circle y line
@@ -57,6 +68,7 @@ class Unit_circle:
             self.circle_origin_y + self.radius,
             fill="black",
             width="1",
+            tags=("y_line_tag"),
         )
 
     def draw_main_line_and_theta_text(
@@ -81,6 +93,7 @@ class Unit_circle:
             self.main_line_endpoint_y,
             fill="green",
             width="3",
+            tags=("main_line_tag"),
         )
 
         end_point = (self.main_line_endpoint_x, self.main_line_endpoint_y)
@@ -121,6 +134,7 @@ class Unit_circle:
                         angle=int(self.theta),
                         fill="green",
                         anchor="center",
+                        tags=("theta_text_tag"),
                         # canvas.create_text(200, 200, text="Rotated Text", angle=45, font=("Arial", 20))
                     )
                 else:  # check if x endpoint is negative
@@ -131,6 +145,7 @@ class Unit_circle:
                         angle=int(self.theta) + 180,
                         fill="green",
                         anchor="center",
+                        tags=("theta_text_tag"),
                         # canvas.create_text(200, 200, text="Rotated Text", angle=45, font=("Arial", 20))
                     )
             else:  # check if y endpoint is negative
@@ -144,6 +159,7 @@ class Unit_circle:
                         angle=int(self.theta),
                         fill="green",
                         anchor="center",
+                        tags=("theta_text_tag"),
                         # canvas.create_text(200, 200, text="Rotated Text", angle=45, font=("Arial", 20))
                     )
                 else:  # check if x endpoint is negative
@@ -154,6 +170,7 @@ class Unit_circle:
                         angle=int(self.theta) + 180,
                         fill="green",
                         anchor="center",
+                        tags=("theta_text_tag"),
                         # canvas.create_text(200, 200, text="Rotated Text", angle=45, font=("Arial", 20))
                     )
 
@@ -187,6 +204,7 @@ class Unit_circle:
             self.circle_origin_y,
             fill="blue",
             width="3",
+            tags=("cosine_line_tag"),
         )
         if (
             self.main_line_endpoint_y - self.circle_origin_y <= 0
@@ -202,6 +220,7 @@ class Unit_circle:
                     text="cosine of theta",
                     fill="blue",
                     anchor="center",
+                    tags=("cosine_text_tag"),
                 )
                 # print(main_line_x - circle_origin_x)
             else:  # if endpoint of line is left of x=0 on the unit circle
@@ -211,6 +230,7 @@ class Unit_circle:
                     text="cosine of theta",
                     fill="blue",
                     anchor="center",
+                    tags=("cosine_text_tag"),
                 )
                 # print(main_line_x - circle_origin_x)
         else:  # if endpoint of line is below y=0 on the unit circle
@@ -223,6 +243,7 @@ class Unit_circle:
                     text="cosine of theta",
                     fill="blue",
                     anchor="center",
+                    tags=("cosine_text_tag"),
                 )
                 # print(main_line_x - circle_origin_x)
             else:  # if endpoint of line is left of x=0 on the unit circle
@@ -232,6 +253,7 @@ class Unit_circle:
                     text="cosine of theta",
                     fill="blue",
                     anchor="center",
+                    tags=("cosine_text_tag"),
                 )
                 # print(main_line_x - circle_origin_x)
 
@@ -258,6 +280,7 @@ class Unit_circle:
             self.circle_origin_y,
             fill="red",
             width="3",
+            tags=("sine_text_tag"),
         )
         # print sin of theta on right side
         if self.main_line_endpoint_x - self.circle_origin_x >= 0:
@@ -267,6 +290,7 @@ class Unit_circle:
                 text="sine of theta",
                 fill="red",
                 anchor="w",
+                tags=("sine_text_tag"),
             )
             # print(main_line_x - circle_origin_x)
         # print sin of theta on left side
@@ -277,8 +301,54 @@ class Unit_circle:
                 text="sine of theta",
                 fill="red",
                 anchor="e",
+                tags=("sine_text_tag"),
             )
             # print(main_line_x - circle_origin_x)
+
+    # def update_unit_circle_theta(self):
+    #    self.theta = self.theta_slider.get()
+
+    # INIT function
+    def create_slider(self):
+        # 2. Create the Slider (Scale widget)
+        # Set its parent as the canvas or root
+        theta_slider = tk.Scale(
+            self.canvas,
+            from_=0,
+            to=360,
+            orient="horizontal",
+            length=360,
+            command=self.on_slider_move,
+        )
+        theta_slider.set(self.theta)  # set initial slider value to user inputted theta
+
+        return theta_slider
+
+    # INIT function
+    def create_slider_window(self):
+        # 3. Embed the Slider into the Canvas
+        # This places the slider widget at the specified (x, y) coordinates
+        self.canvas.create_window(
+            self.circle_origin_x,
+            self.circle_origin_y + self.radius + 50,
+            window=self.theta_slider,
+            anchor="center",
+        )
+
+    def on_slider_move(self, slider_value):
+        self.theta = slider_value
+        print(self.theta)
+        self.canvas.delete("title_tag")
+        self.canvas.delete("unit_circle_tag")
+        self.canvas.delete("x_line_tag")
+        self.canvas.delete("y_line_tag")
+        self.canvas.delete("main_line_tag")
+        self.canvas.delete("theta_text_tag")
+        self.canvas.delete("cosine_line_tag")
+        self.canvas.delete("cosine_text_tag")
+        self.canvas.delete("sine_line_tag")
+        self.canvas.delete("sine_text_tag")
+        self.draw()
 
     def draw(self):
         self.draw_title()
@@ -288,3 +358,4 @@ class Unit_circle:
         self.draw_main_line_and_theta_text()
         self.draw_cosine_line_and_text()
         self.draw_sine_line_and_text()
+        # self.draw_slider()
