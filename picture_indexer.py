@@ -29,12 +29,15 @@ bg3_folder = Path("C:/Users/Zen/Desktop/example_screenshots/BG3")
 wow_screenshots_folder = Path(
     "C:/Program Files (x86)/World of Warcraft/_retail_/Screenshots"
 )
+wow_game_id = "wow"
 twwh_screenshots_folder = Path(
     "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1142710/screenshots"
 )
+twwh_game_id = "twwh"
 bg3_screenshots_folder = Path(
     "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1086940/screenshots"
 )
+bg3_game_id = "bg3"
 
 # print(bg3_folder)
 
@@ -137,65 +140,87 @@ def format_time(unformatted_time):
 #                     "game_id": "bg3",
 #                 }
 #             )
+def add_entries_to_main_dict_picture_index(screenshots_folder, game_id):
+    for path in screenshots_folder.iterdir():  # FOR TESTING WITH SMALLER AMOUNT OF ENTRIES    #### TESTING ONLY #### TESTING ONLY ####
+        # bg3_path_files_test.append(str(path)) #for testing and printing
+        # print(path)
+        # print(type(path))
+        if path.is_file():  # check to make sure path is of a file and not a directory
+            if (
+                path.suffix == ".jpg"
+            ):  # check to make sure that the file is of type '.jpg'
+                temp_stats = os.stat(path)
+                unformatted_time = time.ctime(temp_stats.st_mtime)[
+                    4:
+                ]  # strip out day string
+                main_dict["pictureIndex"].append(
+                    {
+                        "path": path,
+                        "name": path.name,
+                        "created": format_time(unformatted_time),
+                        "game_id": game_id,
+                    }
+                )
 
-for path in bg3_screenshots_folder.iterdir():  # FOR TESTING WITH SMALLER AMOUNT OF ENTRIES    #### TESTING ONLY #### TESTING ONLY ####
-    # bg3_path_files_test.append(str(path)) #for testing and printing
-    # print(path)
-    # print(type(path))
-    if path.is_file():  # check to make sure path is of a file and not a directory
-        if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-            temp_stats = os.stat(path)
-            unformatted_time = time.ctime(temp_stats.st_mtime)[
-                4:
-            ]  # strip out day string
-            main_dict["pictureIndex"].append(
-                {
-                    "path": path,
-                    "name": path.name,
-                    "created": format_time(unformatted_time),
-                    "game_id": "bg3",
-                }
-            )
-            # print("APPENDING")
+
+# for path in bg3_screenshots_folder.iterdir():  # FOR TESTING WITH SMALLER AMOUNT OF ENTRIES    #### TESTING ONLY #### TESTING ONLY ####
+#     # bg3_path_files_test.append(str(path)) #for testing and printing
+#     # print(path)
+#     # print(type(path))
+#     if path.is_file():  # check to make sure path is of a file and not a directory
+#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
+#             temp_stats = os.stat(path)
+#             unformatted_time = time.ctime(temp_stats.st_mtime)[
+#                 4:
+#             ]  # strip out day string
+#             main_dict["pictureIndex"].append(
+#                 {
+#                     "path": path,
+#                     "name": path.name,
+#                     "created": format_time(unformatted_time),
+#                     "game_id": "bg3",
+#                 }
+#             )
+#             # print("APPENDING")
 
 
-for path in wow_screenshots_folder.iterdir():
-    # bg3_path_files_test.append(str(path)) #for testing and printing
-    # print(path)
-    # print(type(path))
-    if path.is_file():  # check to make sure path is of a file and not a directory
-        if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-            temp_stats = os.stat(path)
-            unformatted_time = time.ctime(temp_stats.st_mtime)[
-                4:
-            ]  # strip out day string
-            main_dict["pictureIndex"].append(
-                {
-                    "path": path,
-                    "name": path.name,
-                    "created": format_time(unformatted_time),
-                    "game_id": "wow",
-                }
-            )
+# for path in wow_screenshots_folder.iterdir():
+#     # bg3_path_files_test.append(str(path)) #for testing and printing
+#     # print(path)
+#     # print(type(path))
+#     if path.is_file():  # check to make sure path is of a file and not a directory
+#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
+#             temp_stats = os.stat(path)
+#             unformatted_time = time.ctime(temp_stats.st_mtime)[
+#                 4:
+#             ]  # strip out day string
+#             main_dict["pictureIndex"].append(
+#                 {
+#                     "path": path,
+#                     "name": path.name,
+#                     "created": format_time(unformatted_time),
+#                     "game_id": "wow",
+#                 }
+#             )
 
-for path in twwh_screenshots_folder.iterdir():
-    # bg3_path_files_test.append(str(path)) #for testing and printing
-    # print(path)
-    # print(type(path))
-    if path.is_file():  # check to make sure path is of a file and not a directory
-        if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-            temp_stats = os.stat(path)
-            unformatted_time = time.ctime(temp_stats.st_mtime)[
-                4:
-            ]  # strip out day string
-            main_dict["pictureIndex"].append(
-                {
-                    "path": path,
-                    "name": path.name,
-                    "created": format_time(unformatted_time),
-                    "game_id": "twwh",
-                }
-            )
+# for path in twwh_screenshots_folder.iterdir():
+#     # bg3_path_files_test.append(str(path)) #for testing and printing
+#     # print(path)
+#     # print(type(path))
+#     if path.is_file():  # check to make sure path is of a file and not a directory
+#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
+#             temp_stats = os.stat(path)
+#             unformatted_time = time.ctime(temp_stats.st_mtime)[
+#                 4:
+#             ]  # strip out day string
+#             main_dict["pictureIndex"].append(
+#                 {
+#                     "path": path,
+#                     "name": path.name,
+#                     "created": format_time(unformatted_time),
+#                     "game_id": "twwh",
+#                 }
+#             )
 
 # for path in wow_folder.iterdir():
 #     # bg3_path_files_test.append(str(path)) #for testing and printing
@@ -230,11 +255,22 @@ date_range = ("2023-08-08", "2023-11-13")  # TEST user supplied date range
 # print(main_dict)
 # print(main_dict["pictureIndex"][0]["path"].name)
 
-for entry in main_dict[
-    "pictureIndex"
-]:  # for loop to collect requested entries by game name
-    if entry["game_id"] == "bg3":
-        working_requested_entries.append(entry)
+# for entry in main_dict[
+#     "pictureIndex"
+# ]:  # for loop to collect requested entries by game name
+#     if entry["game_id"] == "bg3":
+#         working_requested_entries.append(entry)
+
+
+def get_dict_entries_by_game_id(
+    main_dict, game_id
+) -> list:  # pass in main dictionary and desired game_id string
+    working_requested_entries = []
+    for entry in main_dict["pictureIndex"]:
+        if entry["game_id"] == game_id:
+            working_requested_entries.append(entry)
+
+    return working_requested_entries
 
 
 def get_dict_entries_by_date_range(
@@ -354,10 +390,16 @@ def get_dict_entries_by_date_range(
     #    print(entry)
 
 
-for entry in working_requested_entries:
-    print(entry)
+add_entries_to_main_dict_picture_index(wow_screenshots_folder, wow_game_id)
+add_entries_to_main_dict_picture_index(twwh_screenshots_folder, twwh_game_id)
+add_entries_to_main_dict_picture_index(bg3_screenshots_folder, bg3_game_id)
+
+working_requested_entries = get_dict_entries_by_game_id(main_dict, "wow")
 get_dict_entries_by_date_range(date_range, working_requested_entries)
 
+
+for entry in working_requested_entries:
+    print(entry)
 print("PRINTING REQUESTED ENTRIES")
 for entry in requested_entries:
     print(entry)
