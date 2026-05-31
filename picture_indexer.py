@@ -62,9 +62,11 @@ class Picture_indexer:
         self.user_input_game_id = ""
         self.user_input_init_date = ""
         self.user_input_end_date = ""
+        self.user_selected_screenshot = ""
         self.user_annotation = ""
 
-        self.run_picture_indexer_setup()
+        # self.run_picture_indexer_setup()
+        self._load_files_from_json()
 
     def run_picture_indexer_setup(self):
         self.add_entries_to_main_dict_picture_index()  # adds screenshots from wow, twwh, and bg3 to main_dict
@@ -90,17 +92,60 @@ class Picture_indexer:
     def _display_all_screenshots(self):
         for entry in self.main_dict["pictureIndex"]:
             # print(entry)
-            print(
-                f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
-            )
+            if entry["annotation"] == "":
+                print(
+                    f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
+                )
+            else:
+                print(
+                    f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
+                )
             # print(entry["created"])
             # print(entry["game_id"])
 
     def _display_selected_screenshots(self):  # displays currently selected screenshots
-        for entry in self.requested_entries:
-            print(
-                f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
-            )
+        # for entry in self.requested_entries:
+        for entry in self.main_dict["pictureIndex"]:
+            if (
+                entry["game_requested"] and entry["date_requested"]
+            ):  # if both flagged, print selected value
+                if entry["annotation"] == "":
+                    print(
+                        f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
+                    )
+                else:
+                    print(
+                        f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
+                    )
+
+    def convert_main_dict_paths_to_strings(
+        self,
+    ):  # convert self.main_dict["pictureIndex"] ["path"] entries from Path(s) to strings
+        for entry in self.main_dict["pictureIndex"]:
+            entry["path"] = str(entry["path"])
+
+    def convert_main_dict_strings_to_paths(
+        self,
+    ):  # convert self.main_dict["pictureIndex"] ["path"] entries from strings to Path(s)
+        for entry in self.main_dict["pictureIndex"]:
+            entry["path"] = Path(entry["path"])
+
+    def _save_selected_files_to_json(self):
+        self.convert_main_dict_paths_to_strings()
+        with open("main_dict.json", "w") as file:
+            json.dump(self.main_dict, file, indent=4)
+
+    def _load_files_from_json(self):
+        try:
+            with open("main_dict.json", "r") as file:
+                self.main_dict = json.load(file)
+                self.convert_main_dict_strings_to_paths()
+                print("LOADING FILES FROM JSON")
+        except:
+            self.run_picture_indexer_setup()
+            print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES")
+
+    # save self.requested_entries
 
     def _select_screenshots_by_game_and_date(self):
         self.user_input_game_id = input(
@@ -122,11 +167,37 @@ class Picture_indexer:
         self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
 
     def _select_and_annotate_screenshot(self):
-        pass
+        self.user_selected_screenshot = input(
+            "Please input a screenshot id of an item that you would like to annotate: "
+        )
+        self.user_annotation = input(
+            "Please add the text that you wish to annotate the screenshot with: "
+        )
+        for entry in self.main_dict["pictureIndex"]:
+            # print("RUNNING ADD ANNOTATION CHECKS")
+            # print(entry["screenshot_id"])
+            # print(self.user_selected_screenshot)
+
+            if entry["screenshot_id"] == self.user_selected_screenshot:
+                entry["annotation"] = self.user_annotation
+                # print(entry["annotation"])
+                # print(self.user_annotation)
+                print("ADDING ANNOTATION")
 
     def _reset_working_and_requested_entries(self):
         self.working_requested_entries = []
         self.requested_entries = []
+
+    def _reset_requested_entries(self):
+        for entry in self.main_dict["pictureIndex"]:
+            if entry[
+                "game_requested"
+            ]:  # evaulates to if entry["game_requested"] == True.   ### swaps to False if True
+                entry["game_requested"] = False
+            if entry[
+                "date_requested"
+            ]:  # evaluates to if entry["date_requested"] == True.   ### swaps to False if True
+                entry["date_requested"] = False
 
     def get_unprocessed_user_input(self):
         self.unprocessed_user_input = input(
@@ -134,6 +205,7 @@ class Picture_indexer:
         )
         if self.unprocessed_user_input == "1":
             # SAVE JSON HERE
+            self._save_selected_files_to_json()
             self._end_main_loop()
         elif self.unprocessed_user_input == "2":
             self._display_all_screenshots()
@@ -242,7 +314,10 @@ class Picture_indexer:
                                 "name": path.name,
                                 "created": self.format_time(unformatted_time),
                                 "game_id": game_id,
-                                "screenshot_id": screenshot_id_iter,
+                                "screenshot_id": str(screenshot_id_iter),
+                                "game_requested": False,  # to track if the game was requested
+                                "date_requested": False,  # to track if the date was requested
+                                "annotation": "",
                             }
                         )
                 screenshot_id_iter += (
@@ -255,12 +330,14 @@ class Picture_indexer:
         for entry in self.main_dict["pictureIndex"]:
             if entry["game_id"] == self.user_input_game_id:
                 self.working_requested_entries.append(entry)
+                entry["game_requested"] = True  ### TESTING
 
     def get_dict_entries_if_no_game_id_specified(
         self,
     ):  # fills main dict with all screenshots if no game_id specified by user
         for entry in self.main_dict["pictureIndex"]:
             self.working_requested_entries.append(entry)
+            entry["game_requested"] = True  ### TESTING
 
     def get_dict_entries_by_date_range(
         self,
@@ -287,7 +364,8 @@ class Picture_indexer:
         # print(end_date_day)
 
         # format entry dates into workable int variables
-        for entry in self.working_requested_entries:
+        # for entry in self.working_requested_entries:
+        for entry in self.main_dict["pictureIndex"]:
             entry_year = int(entry["created"][:4])
             entry_month = int(entry["created"][5:7])
             entry_day = int(entry["created"][8:])
@@ -302,61 +380,70 @@ class Picture_indexer:
             ):  # If entry year is between init year and end year, then all months and days count as in range
                 # any month is good.
                 # any day is good.
-                self.requested_entries.append(entry)
+                # self.requested_entries.append(entry)
+                entry["date_requested"] = True  ### TESTING
             elif (
                 entry_year == init_date_year and entry_year < end_date_year
             ):  # If entry year is equal to init year but less than end year
                 if (
                     entry_month > init_date_month
                 ):  # If entry month is greater than init month then all days count as in range
-                    self.requested_entries.append(entry)
+                    # self.requested_entries.append(entry)
+                    entry["date_requested"] = True  ### TESTING
                 elif (
                     entry_month == init_date_month
                 ):  # If entry month is equal to init month then check if day is in range
                     if (
                         entry_day >= init_date_day
                     ):  # If entry day is greater or equal to init day then it is in range
-                        self.requested_entries.append(entry)
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
             elif (
                 entry_year > init_date_year and entry_year == end_date_year
             ):  # If entry year is equal to end year but greater than init year
                 if (
                     entry_month < end_date_month
                 ):  # If entry month is less than end month then all days count as in range
-                    self.requested_entries.append(entry)
+                    # self.requested_entries.append(entry)
+                    entry["date_requested"] = True  ### TESTING
                 elif (
                     entry_month == end_date_month
                 ):  # If entry month is equal to end month then check if day is in range
                     if (
                         entry_day <= end_date_day
                     ):  # If entry day is less than or equal to end day then it is in range
-                        self.requested_entries.append(entry)
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
             elif (
                 entry_year == init_date_year and entry_year == end_date_year
             ):  # if entry year is the same as init year and end year then the year is in range
                 if (
                     entry_month > init_date_month and entry_month < end_date_month
                 ):  # if entry month is greater than init month and less than end month, then all days are in range
-                    self.requested_entries.append(entry)
+                    # self.requested_entries.append(entry)
+                    entry["date_requested"] = True  ### TESTING
                 elif (
                     entry_month == init_date_month and entry_month < end_date_month
                 ):  # if entry month is equal to init month but less than end month
                     if (
                         entry_day >= init_date_day
                     ):  # If entry day is equal or greater than init day then it is in range
-                        self.requested_entries.append(entry)
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
                 elif (
                     entry_month > init_date_month and entry_month == end_date_month
                 ):  # If entry month is greater than init month and equal to end month
                     if (
                         entry_day <= end_date_day
                     ):  # If entry day is equal or less than end day then it is in range
-                        self.requested_entries.append(entry)
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
                 elif (
                     entry_month == init_date_month and entry_month == end_date_month
                 ):  # If entry month is the same as the init month and end month
                     if entry_day >= init_date_day and entry_day <= end_date_day:
-                        self.requested_entries.append(entry)
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
 
                     ### Extra sections not necessary?  UNTESTED
                     # if (
