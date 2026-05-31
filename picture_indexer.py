@@ -48,16 +48,119 @@ class Picture_indexer:
         }  # combine for add_entries_to_main_dict function
         self.working_requested_entries = []  # list for containing working set of requested entries from user
         self.requested_entries = []  # finalized list containing requested user entries by game name and date
-        self.user_supplied_date_range = (
+        self.user_supplied_date_range = [
             "2023-08-08",
             "2023-11-13",
-        )  ### TEST/HARDCODED user supplied date range in yyyy-mm-dd format
+        ]  ### TEST/HARDCODED user supplied date range in yyyy-mm-dd format
         self.user_supplied_game_id = (
             "wow"  ### TEST/HARDCODED user supplied game id in string format
         )
+        self.unprocessed_user_input = ""
+        self.running = (
+            True  # bool for main loop running check // False if user quits program
+        )
+        self.user_input_game_id = ""
+        self.user_input_init_date = ""
+        self.user_input_end_date = ""
+        self.user_annotation = ""
+
+        self.run_picture_indexer_setup()
+
+    def run_picture_indexer_setup(self):
+        self.add_entries_to_main_dict_picture_index()  # adds screenshots from wow, twwh, and bg3 to main_dict
+
+    def run_picture_indexer_main_loop(self):
+        while self.running:
+            self.print_intro()
+            self.get_unprocessed_user_input()
+        if not self.running:
+            self.print_outro()
 
     def print_intro(self):
         print("Thank you for using the picture index program")
+
+    def print_outro(self):
+        print(
+            "Saving Selected Screenshots... Thank you for using the picture index program."
+        )
+
+    def _end_main_loop(self):
+        self.running = False
+
+    def _display_all_screenshots(self):
+        for entry in self.main_dict["pictureIndex"]:
+            # print(entry)
+            print(
+                f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
+            )
+            # print(entry["created"])
+            # print(entry["game_id"])
+
+    def _display_selected_screenshots(self):  # displays currently selected screenshots
+        for entry in self.requested_entries:
+            print(
+                f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
+            )
+
+    def _select_screenshots_by_game_and_date(self):
+        self.user_input_game_id = input(
+            "Please input a game_id to select from (Leave blank to select from all games): "
+        )
+        self.user_supplied_date_range[0] = input(
+            "Please input an initial date to select from (format: yyyy-mm-dd): "
+        )
+        self.user_supplied_date_range[1] = input(
+            "please input an end date to select from (format: yyyy-mm-dd): "
+        )
+        print(
+            "Your selections have been saved.  Please select 'Display selected screenshots' to view your selections"
+        )
+        if self.user_input_game_id == "":
+            self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
+        elif self.user_input_game_id != "":
+            self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
+        self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
+
+    def _select_and_annotate_screenshot(self):
+        pass
+
+    def _reset_working_and_requested_entries(self):
+        self.working_requested_entries = []
+        self.requested_entries = []
+
+    def get_unprocessed_user_input(self):
+        self.unprocessed_user_input = input(
+            "Please pick an option: (type 1 for option 1., etc) \n1. Save and Quit.\n2. Display all screenshots\n3. Display selected screenshots.\n4. Select screenshots by game and/or date.\n5. Select screenshot to annotate.\nYour response: "
+        )
+        if self.unprocessed_user_input == "1":
+            # SAVE JSON HERE
+            self._end_main_loop()
+        elif self.unprocessed_user_input == "2":
+            self._display_all_screenshots()
+        elif self.unprocessed_user_input == "3":
+            self._display_selected_screenshots()
+        elif self.unprocessed_user_input == "4":
+            self._reset_working_and_requested_entries()  # clears working and requested entries before selecting more
+            self._select_screenshots_by_game_and_date()  # selects new screenshots for working and requested entries
+        elif self.unprocessed_user_input == "5":
+            self._select_and_annotate_screenshot()  # IN DEVELOPMENT
+            # self.user_input_game_id = input(
+            #     "Please input a game_id to select from (Leave blank to select from all games): "
+            # )
+            # self.user_supplied_date_range[0] = input(
+            #     "Please input an initial date to select from (format: yyyy-mm-dd): "
+            # )
+            # self.user_supplied_date_range[1] = input(
+            #     "please input an end date to select from (format: yyyy-mm-dd): "
+            # )
+            # print(
+            #     "Your selections have been saved.  Please select 'Display selected screenshots' to view your selections"
+            # )
+            # if self.user_input_game_id == "":
+            #     self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
+            # elif self.user_input_game_id != "":
+            #     self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
+            # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
 
     def format_time(
         self, unformatted_time
@@ -117,6 +220,7 @@ class Picture_indexer:
     def add_entries_to_main_dict_picture_index(
         self,
     ):  # adds all screenshots in all folders to self.main_dict["pictureIndex"]
+        screenshot_id_iter = 1
         for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
             for path in screenshot_folder.iterdir():
                 # bg3_path_files_test.append(str(path)) #for testing and printing
@@ -138,17 +242,21 @@ class Picture_indexer:
                                 "name": path.name,
                                 "created": self.format_time(unformatted_time),
                                 "game_id": game_id,
+                                "screenshot_id": screenshot_id_iter,
                             }
                         )
+                screenshot_id_iter += (
+                    1  # increment screenshot_id + 1 for each entry added
+                )
 
     def get_dict_entries_by_game_id(
         self,
     ):  # pass in main dictionary and desired game_id string
         for entry in self.main_dict["pictureIndex"]:
-            if entry["game_id"] == self.user_supplied_game_id:
+            if entry["game_id"] == self.user_input_game_id:
                 self.working_requested_entries.append(entry)
 
-    def fill_working_requested_entries_if_no_game_id_specified(
+    def get_dict_entries_if_no_game_id_specified(
         self,
     ):  # fills main dict with all screenshots if no game_id specified by user
         for entry in self.main_dict["pictureIndex"]:
@@ -647,19 +755,24 @@ class Picture_indexer:
 # add_entries_to_main_dict_picture_index(bg3_screenshots_folder, bg3_game_id)
 
 picture_indexer = Picture_indexer()  # initialize picture indexer
-picture_indexer.add_entries_to_main_dict_picture_index()
-picture_indexer.get_dict_entries_by_game_id()
-picture_indexer.get_dict_entries_by_date_range()
+# picture_indexer.add_entries_to_main_dict_picture_index()
+# picture_indexer.get_dict_entries_by_game_id()
+# picture_indexer.get_dict_entries_by_date_range()
 
 # working_requested_entries = get_dict_entries_by_game_id(main_dict, "wow")
 # get_dict_entries_by_date_range(date_range, working_requested_entries)
 
+# unprocessed_user_input = ""
 
-for entry in picture_indexer.working_requested_entries:
-    print(entry)
-print("PRINTING REQUESTED ENTRIES")
-for entry in picture_indexer.requested_entries:
-    print(entry)
+
+picture_indexer.run_picture_indexer_main_loop()
+
+
+# for entry in picture_indexer.working_requested_entries:
+#    print(entry)
+# print("PRINTING REQUESTED ENTRIES")
+# for entry in picture_indexer.requested_entries:
+#    print(entry)
 
 # for key, value in main_dict["pictureIndex"]:
 # print(key)
