@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import time
@@ -19,6 +20,9 @@ from PIL import Image
 
 class Picture_indexer:
     def __init__(self):
+
+        # self.passed_args = args
+
         self.wow_screenshots_folder = Path(
             "C:/Program Files (x86)/World of Warcraft/_retail_/Screenshots"
         )
@@ -184,6 +188,17 @@ class Picture_indexer:
                 # print(self.user_annotation)
                 print("ADDING ANNOTATION")
 
+    def _select_and_display_screenshot_in_default_app(self):
+        self.user_selected_screenshot = input(
+            "Please input a screenshot id of an item that you would like to view: "
+        )
+
+        for entry in self.main_dict["pictureIndex"]:
+            if entry["screenshot_id"] == self.user_selected_screenshot:
+                os.startfile(
+                    rf"{str(entry['path'])}"
+                )  # diplays selected screenshot via path in windows default app
+
     def _reset_working_and_requested_entries(self):
         self.working_requested_entries = []
         self.requested_entries = []
@@ -201,7 +216,7 @@ class Picture_indexer:
 
     def get_unprocessed_user_input(self):
         self.unprocessed_user_input = input(
-            "Please pick an option: (type 1 for option 1., etc) \n1. Save and Quit.\n2. Display all screenshots\n3. Display selected screenshots.\n4. Select screenshots by game and/or date.\n5. Select screenshot to annotate.\nYour response: "
+            "Please pick an option: (type 1 for option 1., etc) \n1. Save and Quit.\n2. Display all screenshots\n3. Display selected screenshots.\n4. Select screenshots by game and/or date.\n5. Select screenshot to annotate.\n6. Select and view screenshot. \nYour response: "
         )
         if self.unprocessed_user_input == "1":
             # SAVE JSON HERE
@@ -215,7 +230,10 @@ class Picture_indexer:
             self._reset_working_and_requested_entries()  # clears working and requested entries before selecting more
             self._select_screenshots_by_game_and_date()  # selects new screenshots for working and requested entries
         elif self.unprocessed_user_input == "5":
-            self._select_and_annotate_screenshot()  # IN DEVELOPMENT
+            self._select_and_annotate_screenshot()  # selects screenshot by ID, then allows user to submit annotation for entry
+        elif self.unprocessed_user_input == "6":
+            self._select_and_display_screenshot_in_default_app()  # selects screenshot by ID, then displays screenshot in default windows app
+
             # self.user_input_game_id = input(
             #     "Please input a game_id to select from (Leave blank to select from all games): "
             # )
@@ -840,6 +858,11 @@ class Picture_indexer:
 # add_entries_to_main_dict_picture_index(wow_screenshots_folder, wow_game_id)
 # add_entries_to_main_dict_picture_index(twwh_screenshots_folder, twwh_game_id)
 # add_entries_to_main_dict_picture_index(bg3_screenshots_folder, bg3_game_id)
+
+# parser = argparse.ArgumentParser(description="A Test for argparse")
+# parser.add_argument("--theta", action="store")
+
+# args = parser.parse_args()
 
 picture_indexer = Picture_indexer()  # initialize picture indexer
 # picture_indexer.add_entries_to_main_dict_picture_index()
