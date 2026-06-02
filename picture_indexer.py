@@ -69,11 +69,31 @@ class Picture_indexer:
         self.user_selected_screenshot = ""
         self.user_annotation = ""
 
+        self.game_details = {"games": []}
+
         # self.run_picture_indexer_setup()
+        self._load_config_file()
         self._load_files_from_json()
 
     def run_picture_indexer_setup(self):
         self.add_entries_to_main_dict_picture_index()  # adds screenshots from wow, twwh, and bg3 to main_dict
+
+    def _load_config_file(self):
+        with open("picture_indexer_config.json", "r") as file:
+            config_dict = json.load(file)
+            for entry in config_dict[
+                "games"
+            ]:  # pulls entries from json config into self.game_details["games"]
+                self.game_details["games"].append(entry)
+            for entry in self.game_details[
+                "games"
+            ]:  # sets screenshotsFolder path into a WindowsPath() object
+                entry["screenshotsFolder"] = Path(entry["screenshotsFolder"])
+
+        print(self.game_details)
+
+        # self.convert_main_dict_strings_to_paths()
+        # print("LOADING FILES FROM JSON")
 
     def run_picture_indexer_main_loop(self):
         while self.running:

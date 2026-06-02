@@ -1,0 +1,19 @@
+{
+  "games": [
+    {
+      "name": "Total War: Warhammer III",
+      "id": "twwh",
+      "screenshotsFolder": "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1142710/screenshots"
+    },
+    {
+      "name": "World of Warcraft",
+      "id": "wow",
+      "screenshotsFolder": "C:/Program Files (x86)/World of Warcraft/_retail_/Screenshots"
+    },
+    {
+      "name": "Baldur's Gate 3",
+      "id": "bg3",
+      "screenshotsFolder": "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1086940/screenshots"
+    }
+  ]
+}
