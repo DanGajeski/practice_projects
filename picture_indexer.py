@@ -23,33 +23,36 @@ class Picture_indexer:
 
         # self.passed_args = args
 
-        self.wow_screenshots_folder = Path(
-            "C:/Program Files (x86)/World of Warcraft/_retail_/Screenshots"
-        )
-        self.wow_test_screenshots_folder = Path(
-            "C:/Users/Zen/Desktop/example_screenshots/WOW"
-        )
-        self.twwh_screenshots_folder = Path(
-            "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1142710/screenshots"
-        )
-        self.twwh_test_screenshots_folder = Path(
-            "C:/Users/Zen/Desktop/example_screenshots/TWWH"
-        )
-        self.bg3_screenshots_folder = Path(
-            "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1086940/screenshots"
-        )
-        self.bg3_test_screenshots_folder = Path(
-            "C:/Users/Zen/Desktop/example_screenshots/BG3"
-        )
-        self.wow_game_id = "wow"
-        self.twwh_game_id = "twwh"
-        self.bg3_game_id = "bg3"
+        # self.wow_screenshots_folder = Path(
+        #     "C:/Program Files (x86)/World of Warcraft/_retail_/Screenshots"
+        # )
+        # self.wow_test_screenshots_folder = Path(
+        #     "C:/Users/Zen/Desktop/example_screenshots/WOW"
+        # )
+        # self.twwh_screenshots_folder = Path(
+        #     "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1142710/screenshots"
+        # )
+        # self.twwh_test_screenshots_folder = Path(
+        #     "C:/Users/Zen/Desktop/example_screenshots/TWWH"
+        # )
+        # self.bg3_screenshots_folder = Path(
+        #     "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1086940/screenshots"
+        # )
+        # self.bg3_test_screenshots_folder = Path(
+        #     "C:/Users/Zen/Desktop/example_screenshots/BG3"
+        # )
+        # self.wow_game_id = "wow"
+        # self.twwh_game_id = "twwh"
+        # self.bg3_game_id = "bg3"
         self.main_dict = {"pictureIndex": []}
-        self.screenshot_folders_and_game_ids = {
-            self.wow_screenshots_folder: self.wow_game_id,
-            self.twwh_screenshots_folder: self.twwh_game_id,
-            self.bg3_screenshots_folder: self.bg3_game_id,
-        }  # combine for add_entries_to_main_dict function
+        # self.screenshot_folders_and_game_ids = {
+        #    self.wow_screenshots_folder: self.wow_game_id,
+        #    self.twwh_screenshots_folder: self.twwh_game_id,
+        #    self.bg3_screenshots_folder: self.bg3_game_id,
+        # }  # combine for add_entries_to_main_dict function
+
+        self.screenshot_folders_and_game_ids = {}  # LOADS paths and path game ids FROM config file (picture_indexer_config.json)
+
         self.working_requested_entries = []  # list for containing working set of requested entries from user
         self.requested_entries = []  # finalized list containing requested user entries by game name and date
         self.user_supplied_date_range = [
@@ -72,8 +75,14 @@ class Picture_indexer:
         self.game_details = {"games": []}
 
         # self.run_picture_indexer_setup()
+
         self._load_config_file()
+        self._setup_screenshots_folders_and_game_ids_var()
+        print("UNFILLED SCREENSHOT FOLDERS AND GAME IDS")
+        print(self.main_dict)
         self._load_files_from_json()
+        print("FILLED SCREENSHOT FOLDERS AND GAME IDS")
+        print(self.main_dict)
 
     def run_picture_indexer_setup(self):
         self.add_entries_to_main_dict_picture_index()  # adds screenshots from wow, twwh, and bg3 to main_dict
@@ -90,7 +99,22 @@ class Picture_indexer:
             ]:  # sets screenshotsFolder path into a WindowsPath() object
                 entry["screenshotsFolder"] = Path(entry["screenshotsFolder"])
 
-        print(self.game_details)
+        # print(self.game_details)
+
+    def _setup_screenshots_folders_and_game_ids_var(
+        self,
+    ):  # fills self.main_dict["pictureIndex"] list with entries in folders provided by picture_indexer_config.json
+        for entry in self.game_details["games"]:
+            self.screenshot_folders_and_game_ids[entry["screenshotsFolder"]] = entry[
+                "id"
+            ]
+
+        # print("CURRENT")
+        # print(self.screenshot_folders_and_game_ids)
+        # print()
+        # print("TEST")
+        # print(self.screenshot_folders_and_game_ids_test)
+        # print()
 
         # self.convert_main_dict_strings_to_paths()
         # print("LOADING FILES FROM JSON")
@@ -124,6 +148,7 @@ class Picture_indexer:
                 print(
                     f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                 )
+
             # print(entry["created"])
             # print(entry["game_id"])
 
@@ -330,6 +355,38 @@ class Picture_indexer:
     def add_entries_to_main_dict_picture_index(
         self,
     ):  # adds all screenshots in all folders to self.main_dict["pictureIndex"]
+        screenshot_id_iter = 1
+        for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
+            for path in screenshot_folder.iterdir():
+                # bg3_path_files_test.append(str(path)) #for testing and printing
+                # print(path)
+                # print(type(path))
+                if (
+                    path.is_file()
+                ):  # check to make sure path is of a file and not a directory
+                    if (
+                        path.suffix == ".jpg"
+                    ):  # check to make sure that the file is of type '.jpg'
+                        temp_stats = os.stat(path)
+                        unformatted_time = time.ctime(temp_stats.st_mtime)[
+                            4:
+                        ]  # strip out day string
+                        self.main_dict["pictureIndex"].append(
+                            {
+                                "path": path,
+                                "name": path.name,
+                                "created": self.format_time(unformatted_time),
+                                "game_id": game_id,
+                                "screenshot_id": str(screenshot_id_iter),
+                                "game_requested": False,  # to track if the game was requested
+                                "date_requested": False,  # to track if the date was requested
+                                "annotation": "",
+                            }
+                        )
+                screenshot_id_iter += (
+                    1  # increment screenshot_id + 1 for each entry added
+                )
+
         screenshot_id_iter = 1
         for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
             for path in screenshot_folder.iterdir():
