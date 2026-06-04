@@ -59,6 +59,14 @@ class Picture_indexer:
             "2023-08-08",
             "2023-11-13",
         ]  ### TEST/HARDCODED user supplied date range in yyyy-mm-dd format
+        self.user_supplied_beginning_date = {
+            "supplied": False,
+            "date": "",
+        }  # for user's beginning date.  separated from end date
+        self.user_supplied_end_date = {
+            "supplied": False,
+            "date": "",
+        }  # for user's end date.  separated from beginning date
         self.user_supplied_game_id = (
             "wow"  ### TEST/HARDCODED user supplied game id in string format
         )
@@ -200,12 +208,22 @@ class Picture_indexer:
         self.user_input_game_id = input(
             "Please input a game_id to select from (Leave blank to select from all games): "
         )
-        self.user_supplied_date_range[0] = input(
-            "Please input an initial date to select from (format: yyyy-mm-dd): "
+        # self.user_supplied_date_range[0] = input(
+        #    "Please input an initial date to select from (format: yyyy-mm-dd): "
+        # )
+        self.user_supplied_beginning_date["date"] = input(
+            "Please input an initial date to select from (format: yyyy-mm-dd, leave blank if no beginning date): "
         )
-        self.user_supplied_date_range[1] = input(
-            "please input an end date to select from (format: yyyy-mm-dd): "
+        if self.user_supplied_beginning_date["date"] != "":
+            self.user_supplied_beginning_date["supplied"] = True
+        # self.user_supplied_date_range[1] = input(
+        #     "please input an end date to select from (format: yyyy-mm-dd): "
+        # )
+        self.user_supplied_end_date["date"] = input(
+            "Please input an end date to select from (format: yyyy-mm-dd, leave blank if no end date): "
         )
+        if self.user_supplied_end_date["date"] != "":
+            self.user_supplied_end_date["supplied"] = True
         print(
             "Your selections have been saved.  Please select 'Display selected screenshots' to view your selections"
         )
@@ -213,7 +231,8 @@ class Picture_indexer:
             self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
         elif self.user_input_game_id != "":
             self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
-        self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
+        # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
+        self.get_dict_entries_by_date_range_test()  # TEST to fill requested entries by beginning date, end date, or both
 
     def _select_and_annotate_screenshot(self):
         self.user_selected_screenshot = input(
@@ -387,37 +406,37 @@ class Picture_indexer:
                     1  # increment screenshot_id + 1 for each entry added
                 )
 
-        screenshot_id_iter = 1
-        for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
-            for path in screenshot_folder.iterdir():
-                # bg3_path_files_test.append(str(path)) #for testing and printing
-                # print(path)
-                # print(type(path))
-                if (
-                    path.is_file()
-                ):  # check to make sure path is of a file and not a directory
-                    if (
-                        path.suffix == ".jpg"
-                    ):  # check to make sure that the file is of type '.jpg'
-                        temp_stats = os.stat(path)
-                        unformatted_time = time.ctime(temp_stats.st_mtime)[
-                            4:
-                        ]  # strip out day string
-                        self.main_dict["pictureIndex"].append(
-                            {
-                                "path": path,
-                                "name": path.name,
-                                "created": self.format_time(unformatted_time),
-                                "game_id": game_id,
-                                "screenshot_id": str(screenshot_id_iter),
-                                "game_requested": False,  # to track if the game was requested
-                                "date_requested": False,  # to track if the date was requested
-                                "annotation": "",
-                            }
-                        )
-                screenshot_id_iter += (
-                    1  # increment screenshot_id + 1 for each entry added
-                )
+        # screenshot_id_iter = 1
+        # for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
+        #     for path in screenshot_folder.iterdir():
+        #         # bg3_path_files_test.append(str(path)) #for testing and printing
+        #         # print(path)
+        #         # print(type(path))
+        #         if (
+        #             path.is_file()
+        #         ):  # check to make sure path is of a file and not a directory
+        #             if (
+        #                 path.suffix == ".jpg"
+        #             ):  # check to make sure that the file is of type '.jpg'
+        #                 temp_stats = os.stat(path)
+        #                 unformatted_time = time.ctime(temp_stats.st_mtime)[
+        #                     4:
+        #                 ]  # strip out day string
+        #                 self.main_dict["pictureIndex"].append(
+        #                     {
+        #                         "path": path,
+        #                         "name": path.name,
+        #                         "created": self.format_time(unformatted_time),
+        #                         "game_id": game_id,
+        #                         "screenshot_id": str(screenshot_id_iter),
+        #                         "game_requested": False,  # to track if the game was requested
+        #                         "date_requested": False,  # to track if the date was requested
+        #                         "annotation": "",
+        #                     }
+        #                 )
+        #         screenshot_id_iter += (
+        #             1  # increment screenshot_id + 1 for each entry added
+        #         )
 
     def get_dict_entries_by_game_id(
         self,
@@ -557,6 +576,311 @@ class Picture_indexer:
                     #     entry_day == init_date_day and entry_day == end_date_day
                     # ):  # If entry day is equal to init day and equal to end day then it is in range
                     #     self.requested_entries.append(entry)
+                    #
+
+    def get_dict_entries_by_date_range_test(
+        self,
+    ):  # for loop to collect requested entries by date range.  Game name requested entries must be run first
+
+        # print("GETTING INTO DATE RANGE TESTER")
+        # print(self.user_supplied_beginning_date)
+        # print(self.user_supplied_end_date)
+        if (
+            self.user_supplied_beginning_date["supplied"]
+            and self.user_supplied_end_date["supplied"]
+        ):  # BOTH dates supplied
+            # format init dates into workable int variables
+            init_date_year = int(self.user_supplied_beginning_date["date"][:4])
+            init_date_month = int(self.user_supplied_beginning_date["date"][5:7])
+            init_date_day = int(self.user_supplied_beginning_date["date"][8:])
+
+            # format end dates into workable int variables
+            end_date_year = int(self.user_supplied_beginning_date["date"][:4])
+            end_date_month = int(self.user_supplied_beginning_date["date"][5:7])
+            end_date_day = int(self.user_supplied_beginning_date["date"][8:])
+
+            # format entry dates into workable int variables
+            # for entry in self.working_requested_entries:
+            for entry in self.main_dict["pictureIndex"]:
+                entry_year = int(entry["created"][:4])
+                entry_month = int(entry["created"][5:7])
+                entry_day = int(entry["created"][8:])
+                # print("BOTH BEGINNING AND END DATES SUPPLIED")
+
+                # CONDITIONAL to check if entry date falls ON OR IN BETWEEN init and end dates according to yyyy-mm-dd format
+                if (
+                    entry_year > init_date_year and entry_year < end_date_year
+                ):  # If entry year is between init year and end year, then all months and days count as in range
+                    # any month is good.
+                    # any day is good.
+                    # self.requested_entries.append(entry)
+                    entry["date_requested"] = True  ### TESTING
+                    # print(entry)
+                elif (
+                    entry_year == init_date_year and entry_year < end_date_year
+                ):  # If entry year is equal to init year but less than end year
+                    if (
+                        entry_month > init_date_month
+                    ):  # If entry month is greater than init month then all days count as in range
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
+                        # print(entry)
+                    elif (
+                        entry_month == init_date_month
+                    ):  # If entry month is equal to init month then check if day is in range
+                        if (
+                            entry_day >= init_date_day
+                        ):  # If entry day is greater or equal to init day then it is in range
+                            # self.requested_entries.append(entry)
+                            entry["date_requested"] = True  ### TESTING
+                            # print(entry)
+                elif (
+                    entry_year > init_date_year and entry_year == end_date_year
+                ):  # If entry year is equal to end year but greater than init year
+                    if (
+                        entry_month < end_date_month
+                    ):  # If entry month is less than end month then all days count as in range
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
+                        # print(entry)
+                    elif (
+                        entry_month == end_date_month
+                    ):  # If entry month is equal to end month then check if day is in range
+                        if (
+                            entry_day <= end_date_day
+                        ):  # If entry day is less than or equal to end day then it is in range
+                            # self.requested_entries.append(entry)
+                            entry["date_requested"] = True  ### TESTING
+                            # print(entry)
+                elif (
+                    entry_year == init_date_year and entry_year == end_date_year
+                ):  # if entry year is the same as init year and end year then the year is in range
+                    if (
+                        entry_month > init_date_month and entry_month < end_date_month
+                    ):  # if entry month is greater than init month and less than end month, then all days are in range
+                        # self.requested_entries.append(entry)
+                        entry["date_requested"] = True  ### TESTING
+                        # print(entry)
+                    elif (
+                        entry_month == init_date_month and entry_month < end_date_month
+                    ):  # if entry month is equal to init month but less than end month
+                        if (
+                            entry_day >= init_date_day
+                        ):  # If entry day is equal or greater than init day then it is in range
+                            # self.requested_entries.append(entry)
+                            entry["date_requested"] = True  ### TESTING
+                            # print(entry)
+                    elif (
+                        entry_month > init_date_month and entry_month == end_date_month
+                    ):  # If entry month is greater than init month and equal to end month
+                        if (
+                            entry_day <= end_date_day
+                        ):  # If entry day is equal or less than end day then it is in range
+                            # self.requested_entries.append(entry)
+                            entry["date_requested"] = True  ### TESTING
+                            # print(entry)
+                    elif (
+                        entry_month == init_date_month and entry_month == end_date_month
+                    ):  # If entry month is the same as the init month and end month
+                        if entry_day >= init_date_day and entry_day <= end_date_day:
+                            # self.requested_entries.append(entry)
+                            entry["date_requested"] = True  ### TESTING
+                            # print(entry)
+
+        elif self.user_supplied_beginning_date[
+            "supplied"
+        ]:  # ONLY beginning date supplied
+            # format init dates into workable int variables
+            init_date_year = int(self.user_supplied_beginning_date["date"][:4])
+            init_date_month = int(self.user_supplied_beginning_date["date"][5:7])
+            init_date_day = int(self.user_supplied_beginning_date["date"][8:])
+
+            # format entry dates into workable int variables
+            # for entry in self.working_requested_entries:
+            for entry in self.main_dict["pictureIndex"]:
+                entry_year = int(entry["created"][:4])
+                entry_month = int(entry["created"][5:7])
+                entry_day = int(entry["created"][8:])
+                # print("ONLY BEGINNING DATE SUPPLIED")
+
+                # FOR ONLY BEGINNING DATE SUPPLIED
+                if entry_year > init_date_year:
+                    # year is good
+                    # any month is good
+                    # any day is good
+                    entry["date_requested"] = True  ### TESTING
+
+                elif entry_year == init_date_year:
+                    # year is good
+                    if entry_month > init_date_month:
+                        # month is good
+                        # any day is good
+                        entry["date_requested"] = True  ### TESTING
+                    elif entry_month == init_date_month:
+                        # month is good
+                        if entry_day >= init_date_day:
+                            # day is good
+                            entry["date_requested"] = True  ### TESTING
+                        # if entry_day == init_date_day:
+                        # day is good, redundant
+
+        elif self.user_supplied_end_date["supplied"]:  # ONLY end date supplied
+            # format end dates into workable int variables
+            end_date_year = int(self.user_supplied_beginning_date["date"][:4])
+            end_date_month = int(self.user_supplied_beginning_date["date"][5:7])
+            end_date_day = int(self.user_supplied_beginning_date["date"][8:])
+
+            # format entry dates into workable int variables
+            # for entry in self.working_requested_entries:
+            for entry in self.main_dict["pictureIndex"]:
+                entry_year = int(entry["created"][:4])
+                entry_month = int(entry["created"][5:7])
+                entry_day = int(entry["created"][8:])
+                # print("ONLY END DATE SUPPLIED")
+
+                # FOR ONLY END DATE SUPPLIED
+                if entry_year < end_date_year:
+                    # year is good
+                    # any month is good
+                    # any day is good
+                    entry["date_requested"] = True  ### TESTING
+                    # print(entry)
+
+                elif entry_year == end_date_year:
+                    # year is good
+                    if entry_month < end_date_month:
+                        # month is good
+                        # any day is good
+                        entry["date_requested"] = True  ### TESTING
+                        # print(entry)
+                    elif entry_month == end_date_month:
+                        # month is good
+                        if entry_day <= end_date_day:
+                            # day is good
+                            entry["date_requested"] = True  ### TESTING
+                            # print(entry)
+                        # if entry_day == init_date_day:
+                        # day is good, redundant
+
+        # # print(date_range)
+
+        # # format init dates into workable int variables
+        # init_date_year = int(self.user_supplied_date_range[0][:4])
+        # init_date_month = int(self.user_supplied_date_range[0][5:7])
+        # init_date_day = int(self.user_supplied_date_range[0][8:])
+
+        # # print(init_date_year)
+        # # print(init_date_month)
+        # # print(init_date_day)
+
+        # # format end dates into workable int variables
+        # end_date_year = int(self.user_supplied_date_range[1][:4])
+        # end_date_month = int(self.user_supplied_date_range[1][5:7])
+        # end_date_day = int(self.user_supplied_date_range[1][8:])
+
+        # # print(end_date_year)
+        # # print(end_date_month)
+        # # print(end_date_day)
+
+        # # format entry dates into workable int variables
+        # # for entry in self.working_requested_entries:
+        # for entry in self.main_dict["pictureIndex"]:
+        #     entry_year = int(entry["created"][:4])
+        #     entry_month = int(entry["created"][5:7])
+        #     entry_day = int(entry["created"][8:])
+        #     # print(entry)
+        #     # print(entry_year)
+        #     # print(init_date_year)
+        #     # print(end_date_year)
+
+        #     # CONDITIONAL to check if entry date falls ON OR IN BETWEEN init and end dates according to yyyy-mm-dd format
+        #     if (
+        #         entry_year > init_date_year and entry_year < end_date_year
+        #     ):  # If entry year is between init year and end year, then all months and days count as in range
+        #         # any month is good.
+        #         # any day is good.
+        #         # self.requested_entries.append(entry)
+        #         entry["date_requested"] = True  ### TESTING
+        #     elif (
+        #         entry_year == init_date_year and entry_year < end_date_year
+        #     ):  # If entry year is equal to init year but less than end year
+        #         if (
+        #             entry_month > init_date_month
+        #         ):  # If entry month is greater than init month then all days count as in range
+        #             # self.requested_entries.append(entry)
+        #             entry["date_requested"] = True  ### TESTING
+        #         elif (
+        #             entry_month == init_date_month
+        #         ):  # If entry month is equal to init month then check if day is in range
+        #             if (
+        #                 entry_day >= init_date_day
+        #             ):  # If entry day is greater or equal to init day then it is in range
+        #                 # self.requested_entries.append(entry)
+        #                 entry["date_requested"] = True  ### TESTING
+        #     elif (
+        #         entry_year > init_date_year and entry_year == end_date_year
+        #     ):  # If entry year is equal to end year but greater than init year
+        #         if (
+        #             entry_month < end_date_month
+        #         ):  # If entry month is less than end month then all days count as in range
+        #             # self.requested_entries.append(entry)
+        #             entry["date_requested"] = True  ### TESTING
+        #         elif (
+        #             entry_month == end_date_month
+        #         ):  # If entry month is equal to end month then check if day is in range
+        #             if (
+        #                 entry_day <= end_date_day
+        #             ):  # If entry day is less than or equal to end day then it is in range
+        #                 # self.requested_entries.append(entry)
+        #                 entry["date_requested"] = True  ### TESTING
+        #     elif (
+        #         entry_year == init_date_year and entry_year == end_date_year
+        #     ):  # if entry year is the same as init year and end year then the year is in range
+        #         if (
+        #             entry_month > init_date_month and entry_month < end_date_month
+        #         ):  # if entry month is greater than init month and less than end month, then all days are in range
+        #             # self.requested_entries.append(entry)
+        #             entry["date_requested"] = True  ### TESTING
+        #         elif (
+        #             entry_month == init_date_month and entry_month < end_date_month
+        #         ):  # if entry month is equal to init month but less than end month
+        #             if (
+        #                 entry_day >= init_date_day
+        #             ):  # If entry day is equal or greater than init day then it is in range
+        #                 # self.requested_entries.append(entry)
+        #                 entry["date_requested"] = True  ### TESTING
+        #         elif (
+        #             entry_month > init_date_month and entry_month == end_date_month
+        #         ):  # If entry month is greater than init month and equal to end month
+        #             if (
+        #                 entry_day <= end_date_day
+        #             ):  # If entry day is equal or less than end day then it is in range
+        #                 # self.requested_entries.append(entry)
+        #                 entry["date_requested"] = True  ### TESTING
+        #         elif (
+        #             entry_month == init_date_month and entry_month == end_date_month
+        #         ):  # If entry month is the same as the init month and end month
+        #             if entry_day >= init_date_day and entry_day <= end_date_day:
+        #                 # self.requested_entries.append(entry)
+        #                 entry["date_requested"] = True  ### TESTING
+
+        ### Extra sections not necessary?  UNTESTED
+        # if (
+        #     entry_day > init_date_day and entry_day < end_date_day
+        # ):  # If entry is greater than init day and less than end day then it is in range
+        #     self.requested_entries.append(entry)
+        # elif (
+        #     entry_day == init_date_day and entry_day < end_date_day
+        # ):  # If entry is equal to init day and less than end day then it is in range
+        #     self.requested_entries.append(entry)
+        # elif (
+        #     entry_day > init_date_day and entry_day == end_date_day
+        # ):  # If entry is greater than init day and equal to end day then it is in range
+        #     self.requested_entries.append(entry)
+        # elif (
+        #     entry_day == init_date_day and entry_day == end_date_day
+        # ):  # If entry day is equal to init day and equal to end day then it is in range
+        #     self.requested_entries.append(entry)
 
 
 # initial_input = input('Please input your option: "add", "annotate", "search": ')
