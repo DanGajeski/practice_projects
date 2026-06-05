@@ -276,7 +276,7 @@ class Picture_indexer:
             # print(entry)
             if (
                 entry["game_requested"] and entry["date_requested"]
-            ):  # if both flagged, print selected value
+            ):  # if BOTH game_requested and date_requested, print selected value
                 if entry["annotation"] == "":
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
@@ -286,7 +286,7 @@ class Picture_indexer:
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                     )
 
-            if entry["game_requested"]:  # if both flagged, print selected value
+            if entry["game_requested"]:  # if ONLY game requested
                 if entry["annotation"] == "":
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
