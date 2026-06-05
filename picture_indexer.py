@@ -82,15 +82,122 @@ class Picture_indexer:
 
         self.game_details = {"games": []}
 
+        self.args = argparse.Namespace  # TESTING, INITIALLY UNFILLED ARGPARSE.NAMESPACE
+        # self.parser =
+
         # self.run_picture_indexer_setup()
+
+        self.args_present = False  # Tracking if args are passed into the program or not
 
         self._load_config_file()
         self._setup_screenshots_folders_and_game_ids_var()
-        print("UNFILLED SCREENSHOT FOLDERS AND GAME IDS")
-        print(self.main_dict)
-        self._load_files_from_json()
-        print("FILLED SCREENSHOT FOLDERS AND GAME IDS")
-        print(self.main_dict)
+        # print("UNFILLED SCREENSHOT FOLDERS AND GAME IDS")
+
+        self._load_files_from_json()  # OPTIONS FOR BOTH INTERACTIVE AND NON INTERACTIVE MODE, LOADS SCREENSHOT FOLDER INFORMATION INTO self.main_dict
+
+        self.args_present = self.parse_args()  # check for if args are passed in.  if args passed in run non-interactive program with passed in args.  if no args present run interactive input
+
+        # print(self.main_dict)
+
+        # print("FILLED SCREENSHOT FOLDERS AND GAME IDS")
+        # print(self.main_dict)
+
+    # parser = argparse.ArgumentParser(
+    #     description="A Test for argparse in picture indexer"
+    # )
+    # # parser.add_argument("--theta", action="store")
+    # parser.add_argument("--game", action="store", help="Selects game to search for.")
+    # parser.add_argument(
+    #     "--before", action="store", help="Selects initial date to search for."
+    # )
+    # parser.add_argument(
+    #     "--after", action="store", help="Selects end date to search for."
+    # )
+
+    # args = parser.parse_args()
+    # parser.add_argument("--annotation", action="store", help="")
+
+    # def track_args(self):
+
+    def parse_args(self):
+        parser = argparse.ArgumentParser(
+            description="A Test for argparse in picture indexer"
+        )
+        # parser.add_argument("--theta", action="store")
+        parser.add_argument(
+            "--game", action="store", help="Selects game to search for."
+        )
+        parser.add_argument(
+            "--before", action="store", help="Selects initial date to search for."
+        )
+        parser.add_argument(
+            "--after", action="store", help="Selects end date to search for."
+        )
+
+        args = parser.parse_args()
+
+        args_present = (
+            False  # RETURN value to let program know if args were passed in or not
+        )
+
+        # self._reset_working_and_requested_entries()  # clears working and requested entries before selecting more
+        # self._select_screenshots_by_game_and_date()  # selects new screenshots for working and requested entries
+
+        # if self.user_input_game_id == "":
+        #     self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
+        # elif self.user_input_game_id != "":
+        #     self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
+        # # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
+        # self.get_dict_entries_by_date_range_test()  # TEST to fill requested entries by ONLY beginning date, ONLY end date, or BOTH
+
+        self.user_supplied_beginning_date = {
+            "supplied": False,
+            "date": "",
+        }  # for user's beginning date.  separated from end date
+        self.user_supplied_end_date = {
+            "supplied": False,
+            "date": "",
+        }  # for user's end date.  separated from beginning date
+        self.user_supplied_game_id = (
+            "wow"  ### TEST/HARDCODED user supplied game id in string format
+        )
+        self.user_input_game_id
+
+        if args.game:
+            print(args.game)
+            self.user_input_game_id = args.game
+            # print(self.user_input_game_id)
+            self.get_dict_entries_by_game_id()  # GAME ID SPECIFIED IN COMMAND LINE
+            # print("GAME ID PRESENT")
+            # print(self.main_dict["pictureIndex"])
+            args_present = True
+        else:
+            self.get_dict_entries_if_no_game_id_specified()  # NO GAME ID SPECIFIED IN COMMAND LINE
+
+        if args.before and args.after:
+            print(f"AFTER {args.after}, BEFORE {args.before}.")
+            self.user_supplied_beginning_date["supplied"] = True
+            self.user_supplied_beginning_date["date"] = args.after  # end date
+            self.user_supplied_end_date["supplied"] = True
+            self.user_supplied_end_date["date"] = args.before  # beginning date
+            self.get_dict_entries_by_date_range_test()
+            args_present = True
+        elif args.after:
+            print(f"ONLY AFTER {args.after}.")
+            self.user_supplied_beginning_date["supplied"] = True
+            self.user_supplied_beginning_date["date"] = args.after
+            self.get_dict_entries_by_date_range_test()
+            args_present = True
+        elif args.before:
+            print(f"ONLY BEFORE {args.before}.")
+            self.user_supplied_end_date["supplied"] = True
+            self.user_supplied_end_date["date"] = args.before
+            self.get_dict_entries_by_date_range_test()
+            args_present = True
+
+        self._display_selected_screenshots()
+
+        return args_present
 
     def run_picture_indexer_setup(self):
         self.add_entries_to_main_dict_picture_index()  # adds screenshots from wow, twwh, and bg3 to main_dict
@@ -128,11 +235,14 @@ class Picture_indexer:
         # print("LOADING FILES FROM JSON")
 
     def run_picture_indexer_main_loop(self):
-        while self.running:
-            self.print_intro()
-            self.get_unprocessed_user_input()
-        if not self.running:
-            self.print_outro()
+        if not (
+            self.args_present
+        ):  # ONLY RUN INTERACTIVE VERSION OF PROGRAM IF NO ARGS PRESENT
+            while self.running:
+                self.print_intro()
+                self.get_unprocessed_user_input()
+            if not self.running:
+                self.print_outro()
 
     def print_intro(self):
         print("Thank you for using the picture index program")
@@ -163,9 +273,20 @@ class Picture_indexer:
     def _display_selected_screenshots(self):  # displays currently selected screenshots
         # for entry in self.requested_entries:
         for entry in self.main_dict["pictureIndex"]:
+            # print(entry)
             if (
                 entry["game_requested"] and entry["date_requested"]
             ):  # if both flagged, print selected value
+                if entry["annotation"] == "":
+                    print(
+                        f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
+                    )
+                else:
+                    print(
+                        f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
+                    )
+
+            if entry["game_requested"]:  # if both flagged, print selected value
                 if entry["annotation"] == "":
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
@@ -192,15 +313,21 @@ class Picture_indexer:
         with open("main_dict.json", "w") as file:
             json.dump(self.main_dict, file, indent=4)
 
-    def _load_files_from_json(self):
-        try:
-            with open("main_dict.json", "r") as file:
-                self.main_dict = json.load(file)
-                self.convert_main_dict_strings_to_paths()
-                print("LOADING FILES FROM JSON")
-        except:
+    def _load_files_from_json(
+        self,
+    ):  # ONLY LOADS FILES FROM JSON IF IN INTERACTIVE MODE.  ELSE RUNS PICTURE INDEXER SETUP WHICH LOADS SCREENSHOTS FOLDERS CONTENTS INTO MAIN_DICT
+        if not self.args_present:  # ONLY USE SELECTED JSON FILE IF IN INTERACTIVE MODE
+            try:
+                with open("main_dict.json", "r") as file:
+                    self.main_dict = json.load(file)
+                    self.convert_main_dict_strings_to_paths()
+                    print("LOADING FILES FROM JSON INTERACTIVELY")
+            except:
+                self.run_picture_indexer_setup()
+                print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES INTERACTIVELY")
+        else:  # RUNNING PICTURE INDEXER SETUP TO ADD FILES TO MAIN_DICT
+            print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES NON INTERACTIVELY")
             self.run_picture_indexer_setup()
-            print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES")
 
     # save self.requested_entries
 
@@ -232,7 +359,7 @@ class Picture_indexer:
         elif self.user_input_game_id != "":
             self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
         # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
-        self.get_dict_entries_by_date_range_test()  # TEST to fill requested entries by beginning date, end date, or both
+        self.get_dict_entries_by_date_range_test()  # TEST to fill requested entries by ONLY beginning date, ONLY end date, or BOTH
 
     def _select_and_annotate_screenshot(self):
         self.user_selected_screenshot = input(
@@ -1266,6 +1393,9 @@ class Picture_indexer:
 # args = parser.parse_args()
 
 picture_indexer = Picture_indexer()  # initialize picture indexer
+picture_indexer.run_picture_indexer_main_loop()
+
+
 # picture_indexer.add_entries_to_main_dict_picture_index()
 # picture_indexer.get_dict_entries_by_game_id()
 # picture_indexer.get_dict_entries_by_date_range()
@@ -1274,9 +1404,6 @@ picture_indexer = Picture_indexer()  # initialize picture indexer
 # get_dict_entries_by_date_range(date_range, working_requested_entries)
 
 # unprocessed_user_input = ""
-
-
-picture_indexer.run_picture_indexer_main_loop()
 
 
 # for entry in picture_indexer.working_requested_entries:
