@@ -272,10 +272,14 @@ class Picture_indexer:
 
     def _display_selected_screenshots(self):  # displays currently selected screenshots
         # for entry in self.requested_entries:
+        date_selected_from_pictureIndex = self.check_if_dates_selected()
         for entry in self.main_dict["pictureIndex"]:
             # print(entry)
             if (
-                entry["game_requested"] and entry["date_requested"]
+                entry["game_requested"]
+                and entry[
+                    "date_requested"
+                ]  # DISPLAY SCREENSHOTS WHEN BOTH GAME REQUESTED AND DATE REQUESTED
             ):  # if BOTH game_requested and date_requested, print selected value
                 if entry["annotation"] == "":
                     print(
@@ -286,7 +290,10 @@ class Picture_indexer:
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                     )
 
-            if entry["game_requested"]:  # if ONLY game requested
+            elif (
+                entry["game_requested"]
+                and not date_selected_from_pictureIndex  # DISPLAY SCREENSHOTS WHEN ONLY GAME SELECTED AND NO DATE SELECTED IN ALL OF THE ENTRIES
+            ):  # if ONLY game requested and NO date selection in ANY of the entries
                 if entry["annotation"] == "":
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
@@ -295,6 +302,17 @@ class Picture_indexer:
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                     )
+
+    def check_if_dates_selected(
+        self,
+    ) -> bool:  # RETURNS FALSE if NO dates selected in ALL entries, RETURNS TRUE if entry['date_requested'] values are found (meaning entry selected via date) in ANY entry
+        date_selected_found = False
+
+        for entry in self.main_dict["pictureIndex"]:
+            if entry["date_requested"]:
+                date_selected_found = True
+
+        return date_selected_found
 
     def convert_main_dict_paths_to_strings(
         self,
@@ -722,9 +740,9 @@ class Picture_indexer:
             init_date_day = int(self.user_supplied_beginning_date["date"][8:])
 
             # format end dates into workable int variables
-            end_date_year = int(self.user_supplied_beginning_date["date"][:4])
-            end_date_month = int(self.user_supplied_beginning_date["date"][5:7])
-            end_date_day = int(self.user_supplied_beginning_date["date"][8:])
+            end_date_year = int(self.user_supplied_end_date["date"][:4])
+            end_date_month = int(self.user_supplied_end_date["date"][5:7])
+            end_date_day = int(self.user_supplied_end_date["date"][8:])
 
             # format entry dates into workable int variables
             # for entry in self.working_requested_entries:
@@ -817,6 +835,7 @@ class Picture_indexer:
         elif self.user_supplied_beginning_date[
             "supplied"
         ]:  # ONLY beginning date supplied
+            print("PROCESSING USER SUPPLIED BEGINNING DATE")
             # format init dates into workable int variables
             init_date_year = int(self.user_supplied_beginning_date["date"][:4])
             init_date_month = int(self.user_supplied_beginning_date["date"][5:7])
@@ -835,6 +854,7 @@ class Picture_indexer:
                     # year is good
                     # any month is good
                     # any day is good
+                    # print("DATE REQUESTED")
                     entry["date_requested"] = True  ### TESTING
 
                 elif entry_year == init_date_year:
@@ -842,20 +862,23 @@ class Picture_indexer:
                     if entry_month > init_date_month:
                         # month is good
                         # any day is good
+                        # print("DATE REQUESTED")
                         entry["date_requested"] = True  ### TESTING
                     elif entry_month == init_date_month:
                         # month is good
                         if entry_day >= init_date_day:
                             # day is good
+                            # print("DATE REQUESTED")
                             entry["date_requested"] = True  ### TESTING
                         # if entry_day == init_date_day:
                         # day is good, redundant
 
         elif self.user_supplied_end_date["supplied"]:  # ONLY end date supplied
+            print(self.user_supplied_end_date["date"])
             # format end dates into workable int variables
-            end_date_year = int(self.user_supplied_beginning_date["date"][:4])
-            end_date_month = int(self.user_supplied_beginning_date["date"][5:7])
-            end_date_day = int(self.user_supplied_beginning_date["date"][8:])
+            end_date_year = int(self.user_supplied_end_date["date"][:4])
+            end_date_month = int(self.user_supplied_end_date["date"][5:7])
+            end_date_day = int(self.user_supplied_end_date["date"][8:])
 
             # format entry dates into workable int variables
             # for entry in self.working_requested_entries:
