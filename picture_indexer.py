@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 
 from PIL import Image
@@ -95,6 +96,8 @@ class Picture_indexer:
 
         self._load_files_from_json()  # OPTIONS FOR BOTH INTERACTIVE AND NON INTERACTIVE MODE, LOADS SCREENSHOT FOLDER INFORMATION INTO self.main_dict
 
+        # self.sort_dict_by_game_and_date()  # SORTS ALL ENTRIES IN self.main_dict["pictureIndex"] by DATE
+
         self.args_present = self.parse_args()  # check for if args are passed in.  if args passed in run non-interactive program with passed in args.  if no args present run interactive input
 
         # print(self.main_dict)
@@ -164,7 +167,7 @@ class Picture_indexer:
         self.user_input_game_id
 
         if args.game:
-            print(args.game)
+            # print(args.game)
             self.user_input_game_id = args.game
             # print(self.user_input_game_id)
             self.get_dict_entries_by_game_id()  # GAME ID SPECIFIED IN COMMAND LINE
@@ -195,6 +198,7 @@ class Picture_indexer:
             self.get_dict_entries_by_date_range_test()
             args_present = True
 
+        self.sort_dict_by_game_and_date()  # takes in self.main_dict["pictureIndex"] and replaces values with all contents SORTED by DATE and GAME
         self._display_selected_screenshots()
 
         return args_present
@@ -515,6 +519,104 @@ class Picture_indexer:
             )
 
         return unformatted_time  # return finalized/formatted time
+
+    def sort_dict_by_game_and_date(
+        self,
+    ):  # takes self.main_dict["pictureIndex"] and sorts all values by date, then replaces self.main_dict["pictureIndex"] with all sorted entries
+        sorting_dict_twwh = {}  # FOR CONTAINING DICT PRE SORT, contains screenshot_id key and entry datetime value
+        sorted_dict_twwh = {}  # FOR CONTAINING DICT SORTED, contains screenshot_id key and entry datetime value
+        staged_list_twwh = []  # FOR CONTAINING TWWH DICT ENTRIES SORTED BY DATE
+        # sorted_list_twwh = [] # for containing screenshot_ids SORTED by DATETIME object
+        sorting_dict_wow = {}
+        sorted_dict_wow = {}
+        staged_list_wow = []
+        # sorted_list_wow = []
+        sorting_dict_bg3 = {}
+        sorted_dict_bg3 = {}
+        staged_list_bg3 = []
+        # sorted_list_bg3 = []
+
+        all_sorted_entries = []
+
+        for entry in self.main_dict["pictureIndex"]:  # FOR ORDERING WOW SCREENSHOTS
+            entry_datetime = datetime(
+                int(entry["created"][:4]),
+                int(entry["created"][5:7]),
+                int(entry["created"][8:]),
+            )  # CREATE date time object from year, month, date of entry["created"]
+            if entry["game_id"] == "wow":
+                sorting_dict_wow[entry["screenshot_id"]] = (
+                    entry_datetime  # FILL sorting_dict_wow DICT with key -> screenshot_id, value -> entry_datetime
+                )
+        sorted_dict_wow = dict(
+            sorted(sorting_dict_wow.items(), key=lambda item: item[1])
+        )
+        for key, value in sorted_dict_wow.items():
+            for entry in self.main_dict["pictureIndex"]:
+                if (
+                    entry["screenshot_id"] == key
+                ):  # KEY IS SCREENSHOT ID IN SORTED_DICT_WOW, if key and screenshot_id for entry are the same, append into staged_list_wow.  Appends values in with ordered dates
+                    staged_list_wow.append(entry)
+        for entry in staged_list_wow:  # ADD SORTED WOW ENTRIES TO ALL SORTED ENTRIES LIST, all sorted entries list will be converted into self.main_dict["pictureIndex"[]
+            all_sorted_entries.append(entry)
+
+        for entry in self.main_dict["pictureIndex"]:  # FOR ORDERING TWWH SCREENSHOTS
+            entry_datetime = datetime(
+                int(entry["created"][:4]),
+                int(entry["created"][5:7]),
+                int(entry["created"][8:]),
+            )  # CREATE date time object from year, month, date of entry["created"]
+            if entry["game_id"] == "twwh":
+                sorting_dict_twwh[entry["screenshot_id"]] = (
+                    entry_datetime  # FILL sorting_dict_wow DICT with key -> screenshot_id, value -> entry_datetime
+                )
+        sorted_dict_twwh = dict(
+            sorted(sorting_dict_twwh.items(), key=lambda item: item[1])
+        )
+        for key, value in sorted_dict_twwh.items():
+            for entry in self.main_dict["pictureIndex"]:
+                if (
+                    entry["screenshot_id"] == key
+                ):  # KEY IS SCREENSHOT ID IN SORTED_DICT_WOW, if key and screenshot_id for entry are the same, append into staged_list_wow.  Appends values in with ordered dates
+                    staged_list_twwh.append(entry)
+        for entry in staged_list_twwh:  # ADD SORTED twwh ENTRIES TO ALL SORTED ENTRIES LIST, all sorted entries list will be converted into self.main_dict["pictureIndex"[]
+            # print(f"TESTING TWWH ENTRY {entry}")
+            all_sorted_entries.append(entry)
+
+        for entry in self.main_dict["pictureIndex"]:  # FOR ORDERING BG3 SCREENSHOTS
+            entry_datetime = datetime(
+                int(entry["created"][:4]),
+                int(entry["created"][5:7]),
+                int(entry["created"][8:]),
+            )  # CREATE date time object from year, month, date of entry["created"]
+            if entry["game_id"] == "bg3":
+                sorting_dict_bg3[entry["screenshot_id"]] = (
+                    entry_datetime  # FILL sorting_dict_wow DICT with key -> screenshot_id, value -> entry_datetime
+                )
+        sorted_dict_bg3 = dict(
+            sorted(sorting_dict_bg3.items(), key=lambda item: item[1])
+        )
+        for key, value in sorted_dict_bg3.items():
+            for entry in self.main_dict["pictureIndex"]:
+                if (
+                    entry["screenshot_id"] == key
+                ):  # KEY IS SCREENSHOT ID IN SORTED_DICT_WOW, if key and screenshot_id for entry are the same, append into staged_list_wow.  Appends values in with ordered dates
+                    staged_list_bg3.append(entry)
+        for entry in staged_list_bg3:  # ADD SORTED bg3 ENTRIES TO ALL SORTED ENTRIES LIST, all sorted entries list will be converted into self.main_dict["pictureIndex"[]
+            all_sorted_entries.append(entry)
+
+        self.main_dict["pictureIndex"] = (
+            all_sorted_entries  # ADD all entries SORTED back into self.main_dict["pictureIndex"]
+        )
+
+        # datetime(entry["created"][:4], entry["created"][5:7], entry["created"][8:])  # CREATE date time object from year, month, date of entry["created"]
+        # init_date_year = int(self.user_supplied_date_range[0][:4])
+        # init_date_month = int(self.user_supplied_date_range[0][5:7])
+        # init_date_day = int(self.user_supplied_date_range[0][8:])
+
+        # elif entry["game_id"] == "twwh":
+        # elif entry["game_id"] == "bg3":
+        # sorting_dict[entry["created"]] = entry["screenshot_id"]
 
     def add_entries_to_main_dict_picture_index(
         self,
@@ -874,7 +976,7 @@ class Picture_indexer:
                         # day is good, redundant
 
         elif self.user_supplied_end_date["supplied"]:  # ONLY end date supplied
-            print(self.user_supplied_end_date["date"])
+            # print(self.user_supplied_end_date["date"])
             # format end dates into workable int variables
             end_date_year = int(self.user_supplied_end_date["date"][:4])
             end_date_month = int(self.user_supplied_end_date["date"][5:7])
