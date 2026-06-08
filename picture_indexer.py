@@ -84,43 +84,15 @@ class Picture_indexer:
         self.game_details = {"games": []}
 
         self.args = argparse.Namespace  # TESTING, INITIALLY UNFILLED ARGPARSE.NAMESPACE
-        # self.parser =
-
-        # self.run_picture_indexer_setup()
 
         self.args_present = False  # Tracking if args are passed into the program or not
 
         self._load_config_file()
         self._setup_screenshots_folders_and_game_ids_var()
-        # print("UNFILLED SCREENSHOT FOLDERS AND GAME IDS")
 
-        self._load_files_from_json()  # OPTIONS FOR BOTH INTERACTIVE AND NON INTERACTIVE MODE, LOADS SCREENSHOT FOLDER INFORMATION INTO self.main_dict
-
-        # self.sort_dict_by_game_and_date()  # SORTS ALL ENTRIES IN self.main_dict["pictureIndex"] by DATE
+        self._load_files_from_json_test()  # OPTIONS FOR BOTH INTERACTIVE AND NON INTERACTIVE MODE, LOADS SCREENSHOT FOLDER INFORMATION INTO self.main_dict
 
         self.args_present = self.parse_args()  # check for if args are passed in.  if args passed in run non-interactive program with passed in args.  if no args present run interactive input
-
-        # print(self.main_dict)
-
-        # print("FILLED SCREENSHOT FOLDERS AND GAME IDS")
-        # print(self.main_dict)
-
-    # parser = argparse.ArgumentParser(
-    #     description="A Test for argparse in picture indexer"
-    # )
-    # # parser.add_argument("--theta", action="store")
-    # parser.add_argument("--game", action="store", help="Selects game to search for.")
-    # parser.add_argument(
-    #     "--before", action="store", help="Selects initial date to search for."
-    # )
-    # parser.add_argument(
-    #     "--after", action="store", help="Selects end date to search for."
-    # )
-
-    # args = parser.parse_args()
-    # parser.add_argument("--annotation", action="store", help="")
-
-    # def track_args(self):
 
     def parse_args(self):
         parser = argparse.ArgumentParser(
@@ -136,22 +108,25 @@ class Picture_indexer:
         parser.add_argument(
             "--after", action="store", help="Selects end date to search for."
         )
+        parser.add_argument(
+            "--annotate",
+            action="store",
+            nargs=2,
+            metavar=("screenshot_id", "annotation_string"),
+            help="Annotate selected screenshot",
+        )
+        parser.add_argument(
+            "--saveall", action="store", help="Saves selections and annotations"
+        )
+        parser.add_argument(
+            "--deleteall", action="store", help="Deletes selections and annotations"
+        )
 
         args = parser.parse_args()
 
         args_present = (
             False  # RETURN value to let program know if args were passed in or not
         )
-
-        # self._reset_working_and_requested_entries()  # clears working and requested entries before selecting more
-        # self._select_screenshots_by_game_and_date()  # selects new screenshots for working and requested entries
-
-        # if self.user_input_game_id == "":
-        #     self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
-        # elif self.user_input_game_id != "":
-        #     self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
-        # # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
-        # self.get_dict_entries_by_date_range_test()  # TEST to fill requested entries by ONLY beginning date, ONLY end date, or BOTH
 
         self.user_supplied_beginning_date = {
             "supplied": False,
@@ -167,12 +142,8 @@ class Picture_indexer:
         self.user_input_game_id
 
         if args.game:
-            # print(args.game)
             self.user_input_game_id = args.game
-            # print(self.user_input_game_id)
             self.get_dict_entries_by_game_id()  # GAME ID SPECIFIED IN COMMAND LINE
-            # print("GAME ID PRESENT")
-            # print(self.main_dict["pictureIndex"])
             args_present = True
         else:
             self.get_dict_entries_if_no_game_id_specified()  # NO GAME ID SPECIFIED IN COMMAND LINE
@@ -183,25 +154,50 @@ class Picture_indexer:
             self.user_supplied_beginning_date["date"] = args.after  # end date
             self.user_supplied_end_date["supplied"] = True
             self.user_supplied_end_date["date"] = args.before  # beginning date
-            self.get_dict_entries_by_date_range_test()
+            self.get_dict_entries_by_date_range()
             args_present = True
         elif args.after:
             print(f"ONLY AFTER {args.after}.")
             self.user_supplied_beginning_date["supplied"] = True
             self.user_supplied_beginning_date["date"] = args.after
-            self.get_dict_entries_by_date_range_test()
+            self.get_dict_entries_by_date_range()
             args_present = True
         elif args.before:
             print(f"ONLY BEFORE {args.before}.")
             self.user_supplied_end_date["supplied"] = True
             self.user_supplied_end_date["date"] = args.before
-            self.get_dict_entries_by_date_range_test()
+            self.get_dict_entries_by_date_range()
             args_present = True
 
         self.sort_dict_by_game_and_date()  # takes in self.main_dict["pictureIndex"] and replaces values with all contents SORTED by DATE and GAME
         self._display_selected_screenshots()
 
+        if args.deleteall:
+            print(f"DELETING SELECTIONS AND ANNOTATIONS FROM JSON")
+            # NEED FUNCTION TO DELETE ALL ADDED VALUES FROM self.main_dict["pictureIndex"]
+            self.args_present = True
+        if args.saveall:
+            print(f"SAVING SELECTIONS AND ANNOTATIONS TO JSON")
+            self._save_selected_files_to_json_test()
+            print("SAVING non interactive DATA TO JSON")
+            self.args_present = True
+
         return args_present
+
+    def _save_selected_files_to_json_test(self):
+        self.convert_main_dict_paths_to_strings()
+        with open("main_dict.json", "w") as file:
+            json.dump(self.main_dict, file, indent=4)
+
+    def _load_files_from_json_test(self):
+        try:
+            with open("main_dict.json", "r") as file:
+                self.main_dict = json.load(file)
+                self.convert_main_dict_strings_to_paths()
+                print("LOADING FILES FROM JSON")
+        except:
+            self.run_picture_indexer_setup()
+            print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES")
 
     def run_picture_indexer_setup(self):
         self.add_entries_to_main_dict_picture_index()  # adds screenshots from wow, twwh, and bg3 to main_dict
@@ -218,8 +214,6 @@ class Picture_indexer:
             ]:  # sets screenshotsFolder path into a WindowsPath() object
                 entry["screenshotsFolder"] = Path(entry["screenshotsFolder"])
 
-        # print(self.game_details)
-
     def _setup_screenshots_folders_and_game_ids_var(
         self,
     ):  # fills self.main_dict["pictureIndex"] list with entries in folders provided by picture_indexer_config.json
@@ -228,17 +222,7 @@ class Picture_indexer:
                 "id"
             ]
 
-        # print("CURRENT")
-        # print(self.screenshot_folders_and_game_ids)
-        # print()
-        # print("TEST")
-        # print(self.screenshot_folders_and_game_ids_test)
-        # print()
-
-        # self.convert_main_dict_strings_to_paths()
-        # print("LOADING FILES FROM JSON")
-
-    def run_picture_indexer_main_loop(self):
+    def run_picture_indexer_main_loop(self):  # BEGINS INTERACTIVE MODE
         if not (
             self.args_present
         ):  # ONLY RUN INTERACTIVE VERSION OF PROGRAM IF NO ARGS PRESENT
@@ -271,9 +255,6 @@ class Picture_indexer:
                     f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                 )
 
-            # print(entry["created"])
-            # print(entry["game_id"])
-
     def _display_selected_screenshots(self):  # displays currently selected screenshots
         # for entry in self.requested_entries:
         date_selected_from_pictureIndex = self.check_if_dates_selected()
@@ -293,7 +274,6 @@ class Picture_indexer:
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                     )
-
             elif (
                 entry["game_requested"]
                 and not date_selected_from_pictureIndex  # DISPLAY SCREENSHOTS WHEN ONLY GAME SELECTED AND NO DATE SELECTED IN ALL OF THE ENTRIES
@@ -335,6 +315,18 @@ class Picture_indexer:
         with open("main_dict.json", "w") as file:
             json.dump(self.main_dict, file, indent=4)
 
+    # def _load_files_from_json_test(
+    #     self,
+    # ):
+    #     try:
+    #         with open("main_dict.json", "r") as file:
+    #             self.main_dict = json.load(file)
+    #             self.convert_main_dict_strings_to_paths()
+    #             print("LOADING FILES FROM JSON INTERACTIVELY")
+    #     except:
+    #         self.run_picture_indexer_setup()
+    #         print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES INTERACTIVELY")
+
     def _load_files_from_json(
         self,
     ):  # ONLY LOADS FILES FROM JSON IF IN INTERACTIVE MODE.  ELSE RUNS PICTURE INDEXER SETUP WHICH LOADS SCREENSHOTS FOLDERS CONTENTS INTO MAIN_DICT
@@ -351,23 +343,21 @@ class Picture_indexer:
             print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES NON INTERACTIVELY")
             self.run_picture_indexer_setup()
 
-    # save self.requested_entries
-
     def _select_screenshots_by_game_and_date(self):
+        # self.user_input_game_id = ""
+        # self.user_supplied_beginning_date["date"] = ""
+        # self.user_supplied_beginning_date["supplied"] = False
+        # self.user_supplied_end_date["date"] = ""
+        # self.user_supplied_end_date["supplied"] = False
+
         self.user_input_game_id = input(
             "Please input a game_id to select from (Leave blank to select from all games): "
         )
-        # self.user_supplied_date_range[0] = input(
-        #    "Please input an initial date to select from (format: yyyy-mm-dd): "
-        # )
         self.user_supplied_beginning_date["date"] = input(
             "Please input an initial date to select from (format: yyyy-mm-dd, leave blank if no beginning date): "
         )
         if self.user_supplied_beginning_date["date"] != "":
             self.user_supplied_beginning_date["supplied"] = True
-        # self.user_supplied_date_range[1] = input(
-        #     "please input an end date to select from (format: yyyy-mm-dd): "
-        # )
         self.user_supplied_end_date["date"] = input(
             "Please input an end date to select from (format: yyyy-mm-dd, leave blank if no end date): "
         )
@@ -380,8 +370,7 @@ class Picture_indexer:
             self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
         elif self.user_input_game_id != "":
             self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
-        # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
-        self.get_dict_entries_by_date_range_test()  # TEST to fill requested entries by ONLY beginning date, ONLY end date, or BOTH
+        self.get_dict_entries_by_date_range()  # TEST to fill requested entries by ONLY beginning date, ONLY end date, or BOTH
 
     def _select_and_annotate_screenshot(self):
         self.user_selected_screenshot = input(
@@ -391,14 +380,8 @@ class Picture_indexer:
             "Please add the text that you wish to annotate the screenshot with: "
         )
         for entry in self.main_dict["pictureIndex"]:
-            # print("RUNNING ADD ANNOTATION CHECKS")
-            # print(entry["screenshot_id"])
-            # print(self.user_selected_screenshot)
-
             if entry["screenshot_id"] == self.user_selected_screenshot:
                 entry["annotation"] = self.user_annotation
-                # print(entry["annotation"])
-                # print(self.user_annotation)
                 print("ADDING ANNOTATION")
 
     def _select_and_display_screenshot_in_default_app(self):
@@ -412,11 +395,10 @@ class Picture_indexer:
                     rf"{str(entry['path'])}"
                 )  # diplays selected screenshot via path in windows default app
 
-    def _reset_working_and_requested_entries(self):
-        self.working_requested_entries = []
-        self.requested_entries = []
-
-    def _reset_requested_entries(self):
+    def _reset_requested_entries(
+        self,
+    ):  # in self.main_dict["pictureIndex"] list, in every dict in the list, keys ["game_requested"] and ["date_requested"] bool values are reset to FALSE
+        # ALSO resets self variables used for tracking user supplied information gathered from interactive command line
         for entry in self.main_dict["pictureIndex"]:
             if entry[
                 "game_requested"
@@ -427,7 +409,15 @@ class Picture_indexer:
             ]:  # evaluates to if entry["date_requested"] == True.   ### swaps to False if True
                 entry["date_requested"] = False
 
-    def get_unprocessed_user_input(self):
+        self.user_input_game_id = ""
+        self.user_supplied_beginning_date["date"] = ""
+        self.user_supplied_beginning_date["supplied"] = False
+        self.user_supplied_end_date["date"] = ""
+        self.user_supplied_end_date["supplied"] = False
+
+    def get_unprocessed_user_input(
+        self,
+    ):  # for INTERACTIVE mode, gets user input and decides what to do with it
         self.unprocessed_user_input = input(
             "Please pick an option: (type 1 for option 1., etc) \n1. Save and Quit.\n2. Display all screenshots\n3. Display selected screenshots.\n4. Select screenshots by game and/or date.\n5. Select screenshot to annotate.\n6. Select and view screenshot. \nYour response: "
         )
@@ -440,34 +430,16 @@ class Picture_indexer:
         elif self.unprocessed_user_input == "3":
             self._display_selected_screenshots()
         elif self.unprocessed_user_input == "4":
-            self._reset_working_and_requested_entries()  # clears working and requested entries before selecting more
+            self._reset_requested_entries()  # clears all game_requested and date_requested values in self.main_dict["pictureIndex"] list of dictionaries, also resets user supplied self variables used to track if user supplied game, beginning and end dates
             self._select_screenshots_by_game_and_date()  # selects new screenshots for working and requested entries
         elif self.unprocessed_user_input == "5":
             self._select_and_annotate_screenshot()  # selects screenshot by ID, then allows user to submit annotation for entry
         elif self.unprocessed_user_input == "6":
             self._select_and_display_screenshot_in_default_app()  # selects screenshot by ID, then displays screenshot in default windows app
 
-            # self.user_input_game_id = input(
-            #     "Please input a game_id to select from (Leave blank to select from all games): "
-            # )
-            # self.user_supplied_date_range[0] = input(
-            #     "Please input an initial date to select from (format: yyyy-mm-dd): "
-            # )
-            # self.user_supplied_date_range[1] = input(
-            #     "please input an end date to select from (format: yyyy-mm-dd): "
-            # )
-            # print(
-            #     "Your selections have been saved.  Please select 'Display selected screenshots' to view your selections"
-            # )
-            # if self.user_input_game_id == "":
-            #     self.get_dict_entries_if_no_game_id_specified()  # fill self.working_requested_entries with all games
-            # elif self.user_input_game_id != "":
-            #     self.get_dict_entries_by_game_id()  # fill self.working_requested_entries with only games by selected id
-            # self.get_dict_entries_by_date_range()  # fill requested entries with img paths generated from get_dict_entries_by_game_id and filtered through get_dict_entries_by_date_range
-
     def format_time(
         self, unformatted_time
-    ):  # cuts excess details and formats time values into yyyy-mm-dd format
+    ):  # cuts excess details and formats time values into yyyy-mm-dd format and returns string value of date (in yyyy-mm-dd format)
         unformatted_time = (
             unformatted_time[:7] + unformatted_time[-4:]
         )  # remove unnecessary time details
@@ -609,24 +581,12 @@ class Picture_indexer:
             all_sorted_entries  # ADD all entries SORTED back into self.main_dict["pictureIndex"]
         )
 
-        # datetime(entry["created"][:4], entry["created"][5:7], entry["created"][8:])  # CREATE date time object from year, month, date of entry["created"]
-        # init_date_year = int(self.user_supplied_date_range[0][:4])
-        # init_date_month = int(self.user_supplied_date_range[0][5:7])
-        # init_date_day = int(self.user_supplied_date_range[0][8:])
-
-        # elif entry["game_id"] == "twwh":
-        # elif entry["game_id"] == "bg3":
-        # sorting_dict[entry["created"]] = entry["screenshot_id"]
-
     def add_entries_to_main_dict_picture_index(
         self,
     ):  # adds all screenshots in all folders to self.main_dict["pictureIndex"]
         screenshot_id_iter = 1
         for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
             for path in screenshot_folder.iterdir():
-                # bg3_path_files_test.append(str(path)) #for testing and printing
-                # print(path)
-                # print(type(path))
                 if (
                     path.is_file()
                 ):  # check to make sure path is of a file and not a directory
@@ -653,38 +613,6 @@ class Picture_indexer:
                     1  # increment screenshot_id + 1 for each entry added
                 )
 
-        # screenshot_id_iter = 1
-        # for screenshot_folder, game_id in self.screenshot_folders_and_game_ids.items():
-        #     for path in screenshot_folder.iterdir():
-        #         # bg3_path_files_test.append(str(path)) #for testing and printing
-        #         # print(path)
-        #         # print(type(path))
-        #         if (
-        #             path.is_file()
-        #         ):  # check to make sure path is of a file and not a directory
-        #             if (
-        #                 path.suffix == ".jpg"
-        #             ):  # check to make sure that the file is of type '.jpg'
-        #                 temp_stats = os.stat(path)
-        #                 unformatted_time = time.ctime(temp_stats.st_mtime)[
-        #                     4:
-        #                 ]  # strip out day string
-        #                 self.main_dict["pictureIndex"].append(
-        #                     {
-        #                         "path": path,
-        #                         "name": path.name,
-        #                         "created": self.format_time(unformatted_time),
-        #                         "game_id": game_id,
-        #                         "screenshot_id": str(screenshot_id_iter),
-        #                         "game_requested": False,  # to track if the game was requested
-        #                         "date_requested": False,  # to track if the date was requested
-        #                         "annotation": "",
-        #                     }
-        #                 )
-        #         screenshot_id_iter += (
-        #             1  # increment screenshot_id + 1 for each entry added
-        #         )
-
     def get_dict_entries_by_game_id(
         self,
     ):  # pass in main dictionary and desired game_id string
@@ -704,134 +632,6 @@ class Picture_indexer:
         self,
     ):  # for loop to collect requested entries by date range.  Game name requested entries must be run first
 
-        # print(date_range)
-
-        # format init dates into workable int variables
-        init_date_year = int(self.user_supplied_date_range[0][:4])
-        init_date_month = int(self.user_supplied_date_range[0][5:7])
-        init_date_day = int(self.user_supplied_date_range[0][8:])
-
-        # print(init_date_year)
-        # print(init_date_month)
-        # print(init_date_day)
-
-        # format end dates into workable int variables
-        end_date_year = int(self.user_supplied_date_range[1][:4])
-        end_date_month = int(self.user_supplied_date_range[1][5:7])
-        end_date_day = int(self.user_supplied_date_range[1][8:])
-
-        # print(end_date_year)
-        # print(end_date_month)
-        # print(end_date_day)
-
-        # format entry dates into workable int variables
-        # for entry in self.working_requested_entries:
-        for entry in self.main_dict["pictureIndex"]:
-            entry_year = int(entry["created"][:4])
-            entry_month = int(entry["created"][5:7])
-            entry_day = int(entry["created"][8:])
-            # print(entry)
-            # print(entry_year)
-            # print(init_date_year)
-            # print(end_date_year)
-
-            # CONDITIONAL to check if entry date falls ON OR IN BETWEEN init and end dates according to yyyy-mm-dd format
-            if (
-                entry_year > init_date_year and entry_year < end_date_year
-            ):  # If entry year is between init year and end year, then all months and days count as in range
-                # any month is good.
-                # any day is good.
-                # self.requested_entries.append(entry)
-                entry["date_requested"] = True  ### TESTING
-            elif (
-                entry_year == init_date_year and entry_year < end_date_year
-            ):  # If entry year is equal to init year but less than end year
-                if (
-                    entry_month > init_date_month
-                ):  # If entry month is greater than init month then all days count as in range
-                    # self.requested_entries.append(entry)
-                    entry["date_requested"] = True  ### TESTING
-                elif (
-                    entry_month == init_date_month
-                ):  # If entry month is equal to init month then check if day is in range
-                    if (
-                        entry_day >= init_date_day
-                    ):  # If entry day is greater or equal to init day then it is in range
-                        # self.requested_entries.append(entry)
-                        entry["date_requested"] = True  ### TESTING
-            elif (
-                entry_year > init_date_year and entry_year == end_date_year
-            ):  # If entry year is equal to end year but greater than init year
-                if (
-                    entry_month < end_date_month
-                ):  # If entry month is less than end month then all days count as in range
-                    # self.requested_entries.append(entry)
-                    entry["date_requested"] = True  ### TESTING
-                elif (
-                    entry_month == end_date_month
-                ):  # If entry month is equal to end month then check if day is in range
-                    if (
-                        entry_day <= end_date_day
-                    ):  # If entry day is less than or equal to end day then it is in range
-                        # self.requested_entries.append(entry)
-                        entry["date_requested"] = True  ### TESTING
-            elif (
-                entry_year == init_date_year and entry_year == end_date_year
-            ):  # if entry year is the same as init year and end year then the year is in range
-                if (
-                    entry_month > init_date_month and entry_month < end_date_month
-                ):  # if entry month is greater than init month and less than end month, then all days are in range
-                    # self.requested_entries.append(entry)
-                    entry["date_requested"] = True  ### TESTING
-                elif (
-                    entry_month == init_date_month and entry_month < end_date_month
-                ):  # if entry month is equal to init month but less than end month
-                    if (
-                        entry_day >= init_date_day
-                    ):  # If entry day is equal or greater than init day then it is in range
-                        # self.requested_entries.append(entry)
-                        entry["date_requested"] = True  ### TESTING
-                elif (
-                    entry_month > init_date_month and entry_month == end_date_month
-                ):  # If entry month is greater than init month and equal to end month
-                    if (
-                        entry_day <= end_date_day
-                    ):  # If entry day is equal or less than end day then it is in range
-                        # self.requested_entries.append(entry)
-                        entry["date_requested"] = True  ### TESTING
-                elif (
-                    entry_month == init_date_month and entry_month == end_date_month
-                ):  # If entry month is the same as the init month and end month
-                    if entry_day >= init_date_day and entry_day <= end_date_day:
-                        # self.requested_entries.append(entry)
-                        entry["date_requested"] = True  ### TESTING
-
-                    ### Extra sections not necessary?  UNTESTED
-                    # if (
-                    #     entry_day > init_date_day and entry_day < end_date_day
-                    # ):  # If entry is greater than init day and less than end day then it is in range
-                    #     self.requested_entries.append(entry)
-                    # elif (
-                    #     entry_day == init_date_day and entry_day < end_date_day
-                    # ):  # If entry is equal to init day and less than end day then it is in range
-                    #     self.requested_entries.append(entry)
-                    # elif (
-                    #     entry_day > init_date_day and entry_day == end_date_day
-                    # ):  # If entry is greater than init day and equal to end day then it is in range
-                    #     self.requested_entries.append(entry)
-                    # elif (
-                    #     entry_day == init_date_day and entry_day == end_date_day
-                    # ):  # If entry day is equal to init day and equal to end day then it is in range
-                    #     self.requested_entries.append(entry)
-                    #
-
-    def get_dict_entries_by_date_range_test(
-        self,
-    ):  # for loop to collect requested entries by date range.  Game name requested entries must be run first
-
-        # print("GETTING INTO DATE RANGE TESTER")
-        # print(self.user_supplied_beginning_date)
-        # print(self.user_supplied_end_date)
         if (
             self.user_supplied_beginning_date["supplied"]
             and self.user_supplied_end_date["supplied"]
@@ -976,19 +776,16 @@ class Picture_indexer:
                         # day is good, redundant
 
         elif self.user_supplied_end_date["supplied"]:  # ONLY end date supplied
-            # print(self.user_supplied_end_date["date"])
             # format end dates into workable int variables
             end_date_year = int(self.user_supplied_end_date["date"][:4])
             end_date_month = int(self.user_supplied_end_date["date"][5:7])
             end_date_day = int(self.user_supplied_end_date["date"][8:])
 
             # format entry dates into workable int variables
-            # for entry in self.working_requested_entries:
             for entry in self.main_dict["pictureIndex"]:
                 entry_year = int(entry["created"][:4])
                 entry_month = int(entry["created"][5:7])
                 entry_day = int(entry["created"][8:])
-                # print("ONLY END DATE SUPPLIED")
 
                 # FOR ONLY END DATE SUPPLIED
                 if entry_year < end_date_year:
@@ -996,7 +793,6 @@ class Picture_indexer:
                     # any month is good
                     # any day is good
                     entry["date_requested"] = True  ### TESTING
-                    # print(entry)
 
                 elif entry_year == end_date_year:
                     # year is good
@@ -1004,625 +800,13 @@ class Picture_indexer:
                         # month is good
                         # any day is good
                         entry["date_requested"] = True  ### TESTING
-                        # print(entry)
                     elif entry_month == end_date_month:
                         # month is good
                         if entry_day <= end_date_day:
                             # day is good
                             entry["date_requested"] = True  ### TESTING
-                            # print(entry)
-                        # if entry_day == init_date_day:
                         # day is good, redundant
 
-        # # print(date_range)
-
-        # # format init dates into workable int variables
-        # init_date_year = int(self.user_supplied_date_range[0][:4])
-        # init_date_month = int(self.user_supplied_date_range[0][5:7])
-        # init_date_day = int(self.user_supplied_date_range[0][8:])
-
-        # # print(init_date_year)
-        # # print(init_date_month)
-        # # print(init_date_day)
-
-        # # format end dates into workable int variables
-        # end_date_year = int(self.user_supplied_date_range[1][:4])
-        # end_date_month = int(self.user_supplied_date_range[1][5:7])
-        # end_date_day = int(self.user_supplied_date_range[1][8:])
-
-        # # print(end_date_year)
-        # # print(end_date_month)
-        # # print(end_date_day)
-
-        # # format entry dates into workable int variables
-        # # for entry in self.working_requested_entries:
-        # for entry in self.main_dict["pictureIndex"]:
-        #     entry_year = int(entry["created"][:4])
-        #     entry_month = int(entry["created"][5:7])
-        #     entry_day = int(entry["created"][8:])
-        #     # print(entry)
-        #     # print(entry_year)
-        #     # print(init_date_year)
-        #     # print(end_date_year)
-
-        #     # CONDITIONAL to check if entry date falls ON OR IN BETWEEN init and end dates according to yyyy-mm-dd format
-        #     if (
-        #         entry_year > init_date_year and entry_year < end_date_year
-        #     ):  # If entry year is between init year and end year, then all months and days count as in range
-        #         # any month is good.
-        #         # any day is good.
-        #         # self.requested_entries.append(entry)
-        #         entry["date_requested"] = True  ### TESTING
-        #     elif (
-        #         entry_year == init_date_year and entry_year < end_date_year
-        #     ):  # If entry year is equal to init year but less than end year
-        #         if (
-        #             entry_month > init_date_month
-        #         ):  # If entry month is greater than init month then all days count as in range
-        #             # self.requested_entries.append(entry)
-        #             entry["date_requested"] = True  ### TESTING
-        #         elif (
-        #             entry_month == init_date_month
-        #         ):  # If entry month is equal to init month then check if day is in range
-        #             if (
-        #                 entry_day >= init_date_day
-        #             ):  # If entry day is greater or equal to init day then it is in range
-        #                 # self.requested_entries.append(entry)
-        #                 entry["date_requested"] = True  ### TESTING
-        #     elif (
-        #         entry_year > init_date_year and entry_year == end_date_year
-        #     ):  # If entry year is equal to end year but greater than init year
-        #         if (
-        #             entry_month < end_date_month
-        #         ):  # If entry month is less than end month then all days count as in range
-        #             # self.requested_entries.append(entry)
-        #             entry["date_requested"] = True  ### TESTING
-        #         elif (
-        #             entry_month == end_date_month
-        #         ):  # If entry month is equal to end month then check if day is in range
-        #             if (
-        #                 entry_day <= end_date_day
-        #             ):  # If entry day is less than or equal to end day then it is in range
-        #                 # self.requested_entries.append(entry)
-        #                 entry["date_requested"] = True  ### TESTING
-        #     elif (
-        #         entry_year == init_date_year and entry_year == end_date_year
-        #     ):  # if entry year is the same as init year and end year then the year is in range
-        #         if (
-        #             entry_month > init_date_month and entry_month < end_date_month
-        #         ):  # if entry month is greater than init month and less than end month, then all days are in range
-        #             # self.requested_entries.append(entry)
-        #             entry["date_requested"] = True  ### TESTING
-        #         elif (
-        #             entry_month == init_date_month and entry_month < end_date_month
-        #         ):  # if entry month is equal to init month but less than end month
-        #             if (
-        #                 entry_day >= init_date_day
-        #             ):  # If entry day is equal or greater than init day then it is in range
-        #                 # self.requested_entries.append(entry)
-        #                 entry["date_requested"] = True  ### TESTING
-        #         elif (
-        #             entry_month > init_date_month and entry_month == end_date_month
-        #         ):  # If entry month is greater than init month and equal to end month
-        #             if (
-        #                 entry_day <= end_date_day
-        #             ):  # If entry day is equal or less than end day then it is in range
-        #                 # self.requested_entries.append(entry)
-        #                 entry["date_requested"] = True  ### TESTING
-        #         elif (
-        #             entry_month == init_date_month and entry_month == end_date_month
-        #         ):  # If entry month is the same as the init month and end month
-        #             if entry_day >= init_date_day and entry_day <= end_date_day:
-        #                 # self.requested_entries.append(entry)
-        #                 entry["date_requested"] = True  ### TESTING
-
-        ### Extra sections not necessary?  UNTESTED
-        # if (
-        #     entry_day > init_date_day and entry_day < end_date_day
-        # ):  # If entry is greater than init day and less than end day then it is in range
-        #     self.requested_entries.append(entry)
-        # elif (
-        #     entry_day == init_date_day and entry_day < end_date_day
-        # ):  # If entry is equal to init day and less than end day then it is in range
-        #     self.requested_entries.append(entry)
-        # elif (
-        #     entry_day > init_date_day and entry_day == end_date_day
-        # ):  # If entry is greater than init day and equal to end day then it is in range
-        #     self.requested_entries.append(entry)
-        # elif (
-        #     entry_day == init_date_day and entry_day == end_date_day
-        # ):  # If entry day is equal to init day and equal to end day then it is in range
-        #     self.requested_entries.append(entry)
-
-
-# initial_input = input('Please input your option: "add", "annotate", "search": ')
-# print(f"Your input was : {initial_input}")
-
-
-# create a path object for directory
-# wow_folder = Path("C:/Users/Zen/Desktop/example_screenshots/WOW")
-# twwh_folder = Path("C:/Users/Zen/Desktop/example_screenshots/TWWH")
-# bg3_folder = Path("C:/Users/Zen/Desktop/example_screenshots/BG3")
-
-# wow_screenshots_folder = Path(
-#    "C:/Program Files (x86)/World of Warcraft/_retail_/Screenshots"
-# )
-# wow_game_id = "wow"
-# twwh_screenshots_folder = Path(
-#    "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1142710/screenshots"
-# )
-# twwh_game_id = "twwh"
-# bg3_screenshots_folder = Path(
-#    "C:/Program Files (x86)/Steam/userdata/109185688/760/remote/1086940/screenshots"
-# )
-# bg3_game_id = "bg3"
-
-# print(bg3_folder)
-
-# wow_files = [f.name for f in wow_folder.iterdir() if f.is_file()]
-# bg3_files = [f.name for f in bg3_folder.iterdir() if f.is_file()]
-# print(str(bg3_folder) + bg3_files[0])
-# print(wow_files)
-
-# bg3_path_files = [f.resolve() for f in bg3_folder.iterdir() if f.is_file()]
-# print(bg3_path_files)
-# print(wow_path_files)
-#
-
-# wow_path_files_test = []
-# bg3_path_files_test = []
-# twwh_path_files_test = []
-
-# wow_info_dict = {}
-# bg3_info_dict = {}
-# twwh_info_dict = {}
-
-# main_dict = {"pictureIndex": []}
-
-# main_dict["pictureIndex"].append({"test": "test_value"})
-
-# print()
-# print(main_dict)
-# print()
-
-
-# def format_time(unformatted_time):
-#     unformatted_time = (
-#         unformatted_time[:7] + unformatted_time[-4:]
-#     )  # remove unnecessary time details
-
-#     match unformatted_time[:3]:  # convert date from name string to numeric string
-#         case "Jan":
-#             unformatted_time = "01" + unformatted_time[3:]
-#         case "Feb":
-#             unformatted_time = "02" + unformatted_time[3:]
-#         case "Mar":
-#             unformatted_time = "03" + unformatted_time[3:]
-#         case "Apr":
-#             unformatted_time = "04" + unformatted_time[3:]
-#         case "May":
-#             unformatted_time = "05" + unformatted_time[3:]
-#         case "Jun":
-#             unformatted_time = "06" + unformatted_time[3:]
-#         case "Jul":
-#             unformatted_time = "07" + unformatted_time[3:]
-#         case "Aug":
-#             unformatted_time = "08" + unformatted_time[3:]
-#         case "Sep":
-#             unformatted_time = "09" + unformatted_time[3:]
-#         case "Oct":
-#             unformatted_time = "10" + unformatted_time[3:]
-#         case "Nov":
-#             unformatted_time = "11" + unformatted_time[3:]
-#         case "Dec":
-#             unformatted_time = "12" + unformatted_time[3:]
-
-#     # format date into yyyy-m-d
-#     if (
-#         int(unformatted_time[3:5]) < 10
-#     ):  # add a 0 to day if day is less than 10 to fit with yyyy-mm-dd format
-#         unformatted_time = (
-#             unformatted_time[-4:]
-#             + "-"
-#             + unformatted_time[:2]
-#             + "-0"
-#             + unformatted_time[4:5]
-#         )
-#     else:  # format without adding a 0 to dd format as dd is 10 or above and doesn't need the initial 0
-#         unformatted_time = (
-#             unformatted_time[-4:]
-#             + "-"
-#             + unformatted_time[:2]
-#             + "-"
-#             + unformatted_time[3:5]
-#         )
-
-#     return unformatted_time  # return finalized/formatted time
-
-
-# for path in bg3_screenshots_folder.iterdir():   # non testing bg3 pictures folder
-#     # bg3_path_files_test.append(str(path)) #for testing and printing
-#     # print(path)
-#     # print(type(path))
-#     if path.is_file():  # check to make sure path is of a file and not a directory
-#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-#             temp_stats = os.stat(path)
-#             unformatted_time = time.ctime(temp_stats.st_mtime)[
-#                 4:
-#             ]  # strip out day string
-#             main_dict["pictureIndex"].append(
-#                 {
-#                     "path": path,
-#                     "name": path.name,
-#                     "created": format_time(unformatted_time),
-#                     "game_id": "bg3",
-#                 }
-#             )
-# def add_entries_to_main_dict_picture_index(screenshots_folder, game_id):
-#     for path in screenshots_folder.iterdir():  # FOR TESTING WITH SMALLER AMOUNT OF ENTRIES    #### TESTING ONLY #### TESTING ONLY ####
-#         # bg3_path_files_test.append(str(path)) #for testing and printing
-#         # print(path)
-#         # print(type(path))
-#         if path.is_file():  # check to make sure path is of a file and not a directory
-#             if (
-#                 path.suffix == ".jpg"
-#             ):  # check to make sure that the file is of type '.jpg'
-#                 temp_stats = os.stat(path)
-#                 unformatted_time = time.ctime(temp_stats.st_mtime)[
-#                     4:
-#                 ]  # strip out day string
-#                 main_dict["pictureIndex"].append(
-#                     {
-#                         "path": path,
-#                         "name": path.name,
-#                         "created": format_time(unformatted_time),
-#                         "game_id": game_id,
-#                     }
-#                 )
-
-
-# for path in bg3_screenshots_folder.iterdir():  # FOR TESTING WITH SMALLER AMOUNT OF ENTRIES    #### TESTING ONLY #### TESTING ONLY ####
-#     # bg3_path_files_test.append(str(path)) #for testing and printing
-#     # print(path)
-#     # print(type(path))
-#     if path.is_file():  # check to make sure path is of a file and not a directory
-#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-#             temp_stats = os.stat(path)
-#             unformatted_time = time.ctime(temp_stats.st_mtime)[
-#                 4:
-#             ]  # strip out day string
-#             main_dict["pictureIndex"].append(
-#                 {
-#                     "path": path,
-#                     "name": path.name,
-#                     "created": format_time(unformatted_time),
-#                     "game_id": "bg3",
-#                 }
-#             )
-#             # print("APPENDING")
-
-
-# for path in wow_screenshots_folder.iterdir():
-#     # bg3_path_files_test.append(str(path)) #for testing and printing
-#     # print(path)
-#     # print(type(path))
-#     if path.is_file():  # check to make sure path is of a file and not a directory
-#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-#             temp_stats = os.stat(path)
-#             unformatted_time = time.ctime(temp_stats.st_mtime)[
-#                 4:
-#             ]  # strip out day string
-#             main_dict["pictureIndex"].append(
-#                 {
-#                     "path": path,
-#                     "name": path.name,
-#                     "created": format_time(unformatted_time),
-#                     "game_id": "wow",
-#                 }
-#             )
-
-# for path in twwh_screenshots_folder.iterdir():
-#     # bg3_path_files_test.append(str(path)) #for testing and printing
-#     # print(path)
-#     # print(type(path))
-#     if path.is_file():  # check to make sure path is of a file and not a directory
-#         if path.suffix == ".jpg":  # check to make sure that the file is of type '.jpg'
-#             temp_stats = os.stat(path)
-#             unformatted_time = time.ctime(temp_stats.st_mtime)[
-#                 4:
-#             ]  # strip out day string
-#             main_dict["pictureIndex"].append(
-#                 {
-#                     "path": path,
-#                     "name": path.name,
-#                     "created": format_time(unformatted_time),
-#                     "game_id": "twwh",
-#                 }
-#             )
-
-# for path in wow_folder.iterdir():
-#     # bg3_path_files_test.append(str(path)) #for testing and printing
-#     # print(path)
-#     # print(type(path))
-
-#     temp_stats = os.stat(path)
-#     unformatted_time = time.ctime(temp_stats.st_mtime)[4:]  # strip out day string
-
-#     main_dict["pictureIndex"].append(
-#         {"path": path, "created": format_time(unformatted_time)}
-#     )
-
-# for path in twwh_folder.iterdir():
-#     # bg3_path_files_test.append(str(path)) #for testing and printing
-#     # print(path)
-#     # print(type(path))
-
-#     temp_stats = os.stat(path)
-#     unformatted_time = time.ctime(temp_stats.st_mtime)[4:]  # strip out day string
-
-#     main_dict["pictureIndex"].append(
-#         {"path": path, "created": format_time(unformatted_time)}
-#     )
-# working_requested_entries = []  # list for containing working set of requested entries from user
-# requested_entries = []  # finalized list containing requested user entries by game name and date
-
-# date_range format: yyyy-mm-dd -> yyyy-mm-dd
-# date_range = ("2023-08-08", "2023-11-13")  # TEST user supplied date range
-
-
-# print(main_dict)
-# print(main_dict["pictureIndex"][0]["path"].name)
-
-# for entry in main_dict[
-#     "pictureIndex"
-# ]:  # for loop to collect requested entries by game name
-#     if entry["game_id"] == "bg3":
-#         working_requested_entries.append(entry)
-
-
-# def get_dict_entries_by_game_id(
-#     main_dict, game_id
-# ) -> list:  # pass in main dictionary and desired game_id string
-#     working_requested_entries = []
-#     for entry in main_dict["pictureIndex"]:
-#         if entry["game_id"] == game_id:
-#             working_requested_entries.append(entry)
-
-#     return working_requested_entries
-
-
-# def get_dict_entries_by_date_range(
-#     date_range, working_requested_entries
-# ):  # for loop to collect requested entries by date range.  Game name requested entries must be run first
-
-#     # print(date_range)
-
-#     # format init dates into workable int variables
-#     init_date_year = int(date_range[0][:4])
-#     init_date_month = int(date_range[0][5:7])
-#     init_date_day = int(date_range[0][8:])
-
-#     # print(init_date_year)
-#     # print(init_date_month)
-#     # print(init_date_day)
-
-#     # format end dates into workable int variables
-#     end_date_year = int(date_range[1][:4])
-#     end_date_month = int(date_range[1][5:7])
-#     end_date_day = int(date_range[1][8:])
-
-#     # print(end_date_year)
-#     # print(end_date_month)
-#     # print(end_date_day)
-
-#     # format entry dates into workable int variables
-#     for entry in working_requested_entries:
-#         entry_year = int(entry["created"][:4])
-#         entry_month = int(entry["created"][5:7])
-#         entry_day = int(entry["created"][8:])
-#         # print(entry)
-#         # print(entry_year)
-#         # print(init_date_year)
-#         # print(end_date_year)
-
-#         # CONDITIONAL to check if entry date falls ON OR IN BETWEEN init and end dates according to yyyy-mm-dd format
-#         if (
-#             entry_year > init_date_year and entry_year < end_date_year
-#         ):  # If entry year is between init year and end year, then all months and days count as in range
-#             # any month is good.
-#             # any day is good.
-#             requested_entries.append(entry)
-#         elif (
-#             entry_year == init_date_year and entry_year < end_date_year
-#         ):  # If entry year is equal to init year but less than end year
-#             if (
-#                 entry_month > init_date_month
-#             ):  # If entry month is greater than init month then all days count as in range
-#                 requested_entries.append(entry)
-#             elif (
-#                 entry_month == init_date_month
-#             ):  # If entry month is equal to init month then check if day is in range
-#                 if (
-#                     entry_day >= init_date_day
-#                 ):  # If entry day is greater or equal to init day then it is in range
-#                     requested_entries.append(entry)
-#         elif (
-#             entry_year > init_date_year and entry_year == end_date_year
-#         ):  # If entry year is equal to end year but greater than init year
-#             if (
-#                 entry_month < end_date_month
-#             ):  # If entry month is less than end month then all days count as in range
-#                 requested_entries.append(entry)
-#             elif (
-#                 entry_month == end_date_month
-#             ):  # If entry month is equal to end month then check if day is in range
-#                 if (
-#                     entry_day <= end_date_day
-#                 ):  # If entry day is less than or equal to end day then it is in range
-#                     requested_entries.append(entry)
-#         elif (
-#             entry_year == init_date_year and entry_year == end_date_year
-#         ):  # if entry year is the same as init year and end year then the year is in range
-#             if (
-#                 entry_month > init_date_month and entry_month < end_date_month
-#             ):  # if entry month is greater than init month and less than end month, then all days are in range
-#                 requested_entries.append(entry)
-#             elif (
-#                 entry_month == init_date_month and entry_month < end_date_month
-#             ):  # if entry month is equal to init month but less than end month
-#                 if (
-#                     entry_day >= init_date_day
-#                 ):  # If entry day is equal or greater than init day then it is in range
-#                     requested_entries.append(entry)
-#             elif (
-#                 entry_month > init_date_month and entry_month == end_date_month
-#             ):  # If entry month is greater than init month and equal to end month
-#                 if (
-#                     entry_day <= end_date_day
-#                 ):  # If entry day is equal or less than end day then it is in range
-#                     requested_entries.append(entry)
-#             elif (
-#                 entry_month == init_date_month and entry_month == end_date_month
-#             ):  # If entry month is the same as the init month and end month
-#                 if (
-#                     entry_day > init_date_day and entry_day < end_date_day
-#                 ):  # If entry is greater than init day and less than end day then it is in range
-#                     requested_entries.append(entry)
-#                 if (
-#                     entry_day == init_date_day and entry_day < end_date_day
-#                 ):  # If entry is equal to init day and less than end day then it is in range
-#                     requested_entries.append(entry)
-#                 elif (
-#                     entry_day > init_date_day and entry_day == end_date_day
-#                 ):  # If entry is greater than init day and equal to end day then it is in range
-#                     requested_entries.append(entry)
-#                 elif (
-#                     entry_day == init_date_day and entry_day == end_date_day
-#                 ):  # If entry day is equal to init day and equal to end day then it is in range
-#                     requested_entries.append(entry)
-
-# if entry_year >= init_date_year and entry_year <= end_date_year:
-#   working_requested_entries.append(entry)
-
-# if main_dict["pictureIndex"][entry]["game_id"] == "bg3":
-#    print(entry)
-
-
-# add_entries_to_main_dict_picture_index(wow_screenshots_folder, wow_game_id)
-# add_entries_to_main_dict_picture_index(twwh_screenshots_folder, twwh_game_id)
-# add_entries_to_main_dict_picture_index(bg3_screenshots_folder, bg3_game_id)
-
-# parser = argparse.ArgumentParser(description="A Test for argparse")
-# parser.add_argument("--theta", action="store")
-
-# args = parser.parse_args()
 
 picture_indexer = Picture_indexer()  # initialize picture indexer
-picture_indexer.run_picture_indexer_main_loop()
-
-
-# picture_indexer.add_entries_to_main_dict_picture_index()
-# picture_indexer.get_dict_entries_by_game_id()
-# picture_indexer.get_dict_entries_by_date_range()
-
-# working_requested_entries = get_dict_entries_by_game_id(main_dict, "wow")
-# get_dict_entries_by_date_range(date_range, working_requested_entries)
-
-# unprocessed_user_input = ""
-
-
-# for entry in picture_indexer.working_requested_entries:
-#    print(entry)
-# print("PRINTING REQUESTED ENTRIES")
-# for entry in picture_indexer.requested_entries:
-#    print(entry)
-
-# for key, value in main_dict["pictureIndex"]:
-# print(key)
-# print()
-# print(value)
-# bg3_info_dict[str(path)] = format_time(unformatted_time)
-
-# formatted_time = unformatted_time[:7] + unformatted_time[-4:]
-
-# print(formatted_time[:3])
-
-# match formatted_time[:3]:
-#     case "Jan":
-#         formatted_time = "01" + formatted_time[3:]
-#     case "Feb":
-#         formatted_time = "02" + formatted_time[3:]
-#     case "Mar":
-#         formatted_time = "03" + formatted_time[3:]
-#     case "Apr":
-#         formatted_time = "04" + formatted_time[3:]
-#     case "May":
-#         formatted_time = "05" + formatted_time[3:]
-#     case "Jun":
-#         formatted_time = "06" + formatted_time[3:]
-#     case "Jul":
-#         formatted_time = "07" + formatted_time[3:]
-#     case "Aug":
-#         formatted_time = "08" + formatted_time[3:]
-#     case "Sep":
-#         formatted_time = "09" + formatted_time[3:]
-#     case "Oct":
-#         formatted_time = "10" + formatted_time[3:]
-#     case "Nov":
-#         formatted_time = "11" + formatted_time[3:]
-#     case "Dec":
-#         formatted_time = "12" + formatted_time[3:]
-
-# formatted_time = (
-#     formatted_time[-4:] + "-" + formatted_time[:2] + "-" + formatted_time[3:6]
-# )
-
-
-# for path in wow_folder.iterdir():
-#    wow_path_files_test.append(str(path))
-# for path in twwh_folder.iterdir():
-#    twwh_path_files_test.append(str(path))
-
-# for path in wow_path_files_test:
-#    temp_stats = os.stat(path)
-#    wow_info_dict[path] = time.ctime(temp_stats.st_mtime)
-
-# for path in bg3_path_files_test:
-#     temp_stats = os.stat(path)
-#     bg3_info_dict[path] = time.ctime(temp_stats.st_mtime)
-
-# for path in twwh_path_files_test:
-#    temp_stats = os.stat(path)
-#    twwh_info_dict[path] = time.ctime(temp_stats.st_mtime)
-
-
-# for path in wow_path_files:
-#    print(path)
-
-# for path in wow_path_files:
-#     print(path)
-#     wow_picture_file_paths.append(path)
-#     temp_stats = os.stat(path)
-#     wow_info_dict[path] = time.ctime(temp_stats.st_mtime)
-#
-
-# for key, value in bg3_info_dict.items():
-#    print(f"{key} : {value}")
-# value = value[:4]
-
-# print(wow_info_dict)
-# print(bg3_info_dict)
-# print(twwh_info_dict)
-# print(wow_info_dict)
-
-# for path in wow_picture_file_paths:
-#    print(path)
-
-# for key, value in main_dict.items():
-#    print(key)
-#    print(value)
-
-# print(main_dict["pictureIndex"])
-
-# for dict in main_dict["pictureIndex"]:
-#    print(dict)
+picture_indexer.run_picture_indexer_main_loop()  # run picture_indexer batch mode if arguments passed on command line, or run interactive mode if no arguments passed on command line
