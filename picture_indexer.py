@@ -119,7 +119,9 @@ class Picture_indexer:
             "--saveall", action="store", help="Saves selections and annotations"
         )
         parser.add_argument(
-            "--deleteall", action="store", help="Deletes selections and annotations"
+            "--deleteall",
+            action="store_true",
+            help="Deletes selections and annotations",
         )
 
         args = parser.parse_args()
@@ -175,14 +177,21 @@ class Picture_indexer:
         if args.deleteall:
             print(f"DELETING SELECTIONS AND ANNOTATIONS FROM JSON")
             # NEED FUNCTION TO DELETE ALL ADDED VALUES FROM self.main_dict["pictureIndex"]
+            self._delete_all_selected_files()  # resets to false "game_requested" and "date_reqeusted" entry values
             self.args_present = True
         if args.saveall:
             print(f"SAVING SELECTIONS AND ANNOTATIONS TO JSON")
             self._save_selected_files_to_json_test()
             print("SAVING non interactive DATA TO JSON")
             self.args_present = True
+        # if args.annotation:
 
         return args_present
+
+    def _delete_all_selected_files(self):
+        for entry in self.main_dict["pictureIndex"]:
+            entry["game_requested"] = False
+            entry["date_reqeusted"] = False
 
     def _save_selected_files_to_json_test(self):
         self.convert_main_dict_paths_to_strings()
