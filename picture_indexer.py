@@ -88,10 +88,15 @@ class Picture_indexer:
 
         self.args_present = False  # Tracking if args are passed into the program or not
 
+        # print(self.main_dict)
         self._load_config_file()
+        # print(self.main_dict)
         self._setup_screenshots_folders_and_game_ids_var()
+        # print(self.main_dict)
 
+        # print(self.main_dict)
         self._load_files_from_json_test()  # OPTIONS FOR BOTH INTERACTIVE AND NON INTERACTIVE MODE, LOADS SCREENSHOT FOLDER INFORMATION INTO self.main_dict
+        # print(self.main_dict)
 
         self.args_present = self.parse_args()  # check for if args are passed in.  if args passed in run non-interactive program with passed in args.  if no args present run interactive input
 
@@ -142,44 +147,68 @@ class Picture_indexer:
         self.user_supplied_game_id = (
             "wow"  ### TEST/HARDCODED user supplied game id in string format
         )
-        self.user_input_game_id
+        # self.user_input_game_id
 
         if args.game:
             self.user_input_game_id = args.game
             self.get_dict_entries_by_game_id()  # GAME ID SPECIFIED IN COMMAND LINE
             args_present = True
+            if args.before and args.after:
+                print(f"AFTER {args.after}, BEFORE {args.before}.")
+                self.user_supplied_beginning_date["supplied"] = True
+                self.user_supplied_beginning_date["date"] = args.after  # end date
+                self.user_supplied_end_date["supplied"] = True
+                self.user_supplied_end_date["date"] = args.before  # beginning date
+                self.get_dict_entries_by_date_range()
+                args_present = True
+            if args.after:
+                print(f"ONLY AFTER {args.after}.")
+                self.user_supplied_beginning_date["supplied"] = True
+                self.user_supplied_beginning_date["date"] = args.after
+                self.get_dict_entries_by_date_range()
+                args_present = True
+            if args.before:
+                print(f"ONLY BEFORE {args.before}.")
+                self.user_supplied_end_date["supplied"] = True
+                self.user_supplied_end_date["date"] = args.before
+                self.get_dict_entries_by_date_range()
+                args_present = True
         else:
-            self.get_dict_entries_if_no_game_id_specified()  # NO GAME ID SPECIFIED IN COMMAND LINE
+            #     self.get_dict_entries_if_no_game_id_specified()  # NO GAME ID SPECIFIED IN COMMAND LINE
 
-        if args.before and args.after:
-            print(f"AFTER {args.after}, BEFORE {args.before}.")
-            self.user_supplied_beginning_date["supplied"] = True
-            self.user_supplied_beginning_date["date"] = args.after  # end date
-            self.user_supplied_end_date["supplied"] = True
-            self.user_supplied_end_date["date"] = args.before  # beginning date
-            self.get_dict_entries_by_date_range()
-            args_present = True
-        elif args.after:
-            print(f"ONLY AFTER {args.after}.")
-            self.user_supplied_beginning_date["supplied"] = True
-            self.user_supplied_beginning_date["date"] = args.after
-            self.get_dict_entries_by_date_range()
-            args_present = True
-        elif args.before:
-            print(f"ONLY BEFORE {args.before}.")
-            self.user_supplied_end_date["supplied"] = True
-            self.user_supplied_end_date["date"] = args.before
-            self.get_dict_entries_by_date_range()
-            args_present = True
+            if args.before and args.after:
+                self.get_dict_entries_if_no_game_id_specified()
+                print(f"AFTER {args.after}, BEFORE {args.before}.")
+                self.user_supplied_beginning_date["supplied"] = True
+                self.user_supplied_beginning_date["date"] = args.after  # end date
+                self.user_supplied_end_date["supplied"] = True
+                self.user_supplied_end_date["date"] = args.before  # beginning date
+                self.get_dict_entries_by_date_range()
+                args_present = True
+            elif args.after:
+                self.get_dict_entries_if_no_game_id_specified()
+                print(f"ONLY AFTER {args.after}.")
+                self.user_supplied_beginning_date["supplied"] = True
+                self.user_supplied_beginning_date["date"] = args.after
+                self.get_dict_entries_by_date_range()
+                args_present = True
+            elif args.before:
+                self.get_dict_entries_if_no_game_id_specified()
+                print(f"ONLY BEFORE {args.before}.")
+                self.user_supplied_end_date["supplied"] = True
+                self.user_supplied_end_date["date"] = args.before
+                self.get_dict_entries_by_date_range()
+                args_present = True
 
         self.sort_dict_by_game_and_date()  # takes in self.main_dict["pictureIndex"] and replaces values with all contents SORTED by DATE and GAME
-        # self._display_selected_screenshots()
+        self._display_selected_screenshots()
 
         if args.deleteall:
             print(f"DELETING SELECTIONS AND ANNOTATIONS FROM JSON")
             # NEED FUNCTION TO DELETE ALL ADDED VALUES FROM self.main_dict["pictureIndex"]
             self._delete_all_selected_files()  # resets to false "game_requested" and "date_reqeusted" entry values, deletes json file containing main_dict
 
+            print(self.main_dict_file_location)
             if os.path.exists(self.main_dict_file_location):
                 os.remove(self.main_dict_file_location)
                 print("DELETING MAIN DICT FILE LOCATION JSON")
@@ -197,9 +226,26 @@ class Picture_indexer:
         return args_present
 
     def _delete_all_selected_files(self):
+        print("REMOVING GAMEREQUESTED AND DATEREQUESTED")
         for entry in self.main_dict["pictureIndex"]:
-            entry["game_requested"] = False
-            entry["date_reqeusted"] = False
+            if entry["game_requested"]:
+                # print("REMOVING ENTRY")
+                entry["game_requested"] = False
+            if entry["date_requested"]:
+                # print("REMOVING ENTRY")
+                entry["date_requested"] = False
+            # print("REMOVING ENTRY")
+
+        for entry in self.main_dict["pictureIndex"]:
+            if entry["game_requested"]:
+                print("GAME REQUESTED STILL THERE")
+
+        # for entry in self.main_dict["pictureIndex"]:
+        #     # print(entry)
+        #     if (
+        #         entry["game_requested"]
+        #         and entry[
+        #             "date_requested"
 
     def _save_selected_files_to_json_test(self):
         self.convert_main_dict_paths_to_strings()
@@ -209,11 +255,19 @@ class Picture_indexer:
     def _load_files_from_json_test(self):
         try:
             with open("main_dict.json", "r") as file:
+                # print(self.main_dict)
+                print("THERE IS A MAIN DICT LOADING HERE")
                 self.main_dict = json.load(file)
                 self.convert_main_dict_strings_to_paths()
                 print("LOADING FILES FROM JSON")
+                # print(self.main_dict)
         except:
+            # print(self.main_dict)
             self.run_picture_indexer_setup()
+            for entry in self.main_dict["pictureIndex"]:
+                if entry["game_requested"]:
+                    print("GAME FUCKING REQUESTED")
+            # print(self.main_dict)
             print("INITIALIZING FRESHLY PULLED SCREENSHOT FILES")
 
     def run_picture_indexer_setup(self):
@@ -234,6 +288,7 @@ class Picture_indexer:
                 self.main_dict_file_location = config_dict[
                     "main_dict_file_location"
                 ]  # get's value of confic_dict["main_dict_file_location"]
+                print("ADDING MAINDICTFILELOCATION!!!!")
 
     def _setup_screenshots_folders_and_game_ids_var(
         self,
@@ -278,9 +333,9 @@ class Picture_indexer:
 
     def _display_selected_screenshots(self):  # displays currently selected screenshots
         # for entry in self.requested_entries:
+        # self._delete_all_selected_files()
         date_selected_from_pictureIndex = self.check_if_dates_selected()
         for entry in self.main_dict["pictureIndex"]:
-            # print(entry)
             if (
                 entry["game_requested"]
                 and entry[
@@ -299,6 +354,9 @@ class Picture_indexer:
                 entry["game_requested"]
                 and not date_selected_from_pictureIndex  # DISPLAY SCREENSHOTS WHEN ONLY GAME SELECTED AND NO DATE SELECTED IN ALL OF THE ENTRIES
             ):  # if ONLY game requested and NO date selection in ANY of the entries
+                # print(entry["game_requested"])
+                # print(date_selected_from_pictureIndex)
+
                 if entry["annotation"] == "":
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}"
@@ -307,6 +365,9 @@ class Picture_indexer:
                     print(
                         f"Filename: {entry['name']}, Creation date: {entry['created']}, Game id: {entry['game_id']}, Screenshot id: {entry['screenshot_id']}, Annotation: {entry['annotation']}"
                     )
+                # entry["game_requested"] = False
+                # print(entry["game_requested"])
+                # print("END PRINTING PHANTOM ENTRY")
 
     def check_if_dates_selected(
         self,
@@ -316,6 +377,7 @@ class Picture_indexer:
         for entry in self.main_dict["pictureIndex"]:
             if entry["date_requested"]:
                 date_selected_found = True
+                print("DATE SELECTED FOUND")
 
         return date_selected_found
 
@@ -647,7 +709,9 @@ class Picture_indexer:
     ):  # fills main dict with all screenshots if no game_id specified by user
         for entry in self.main_dict["pictureIndex"]:
             self.working_requested_entries.append(entry)
-            entry["game_requested"] = True  ### TESTING
+            entry["game_requested"] = (
+                True  ### TESTING   # ERROR BEING CAUSED BY BLANKET ADDING ALL GAMES
+            )
 
     def get_dict_entries_by_date_range(
         self,
