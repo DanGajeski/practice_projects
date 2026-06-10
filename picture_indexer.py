@@ -46,6 +46,7 @@ class Picture_indexer:
         # self.twwh_game_id = "twwh"
         # self.bg3_game_id = "bg3"
         self.main_dict = {"pictureIndex": []}
+        self.main_dict_file_location = ""
         # self.screenshot_folders_and_game_ids = {
         #    self.wow_screenshots_folder: self.wow_game_id,
         #    self.twwh_screenshots_folder: self.twwh_game_id,
@@ -172,12 +173,19 @@ class Picture_indexer:
             args_present = True
 
         self.sort_dict_by_game_and_date()  # takes in self.main_dict["pictureIndex"] and replaces values with all contents SORTED by DATE and GAME
-        self._display_selected_screenshots()
+        # self._display_selected_screenshots()
 
         if args.deleteall:
             print(f"DELETING SELECTIONS AND ANNOTATIONS FROM JSON")
             # NEED FUNCTION TO DELETE ALL ADDED VALUES FROM self.main_dict["pictureIndex"]
-            self._delete_all_selected_files()  # resets to false "game_requested" and "date_reqeusted" entry values
+            self._delete_all_selected_files()  # resets to false "game_requested" and "date_reqeusted" entry values, deletes json file containing main_dict
+
+            if os.path.exists(self.main_dict_file_location):
+                os.remove(self.main_dict_file_location)
+                print("DELETING MAIN DICT FILE LOCATION JSON")
+            else:
+                print("MAIN DICT FILE LOCATION DOES NOT EXIST")
+
             self.args_present = True
         if args.saveall:
             print(f"SAVING SELECTIONS AND ANNOTATIONS TO JSON")
@@ -222,6 +230,10 @@ class Picture_indexer:
                 "games"
             ]:  # sets screenshotsFolder path into a WindowsPath() object
                 entry["screenshotsFolder"] = Path(entry["screenshotsFolder"])
+            if self.main_dict_file_location == "":
+                self.main_dict_file_location = config_dict[
+                    "main_dict_file_location"
+                ]  # get's value of confic_dict["main_dict_file_location"]
 
     def _setup_screenshots_folders_and_game_ids_var(
         self,
