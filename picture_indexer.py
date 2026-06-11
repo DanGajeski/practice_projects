@@ -221,6 +221,28 @@ class Picture_indexer:
             self._save_selected_files_to_json_test()
             print("SAVING non interactive DATA TO JSON")
             self.args_present = True
+
+        if args.annotate:
+            print("ANNOTATING")
+
+            # parser.add_argument(
+            #     "--annotate",
+            #     action="store",
+            #     nargs=2,
+            #     metavar=("screenshot_id", "annotation_string"),
+            #     help="Annotate selected screenshot",
+            # )
+            screenshot_id, annotation_string = args.annotate
+
+            for entry in self.main_dict["pictureIndex"]:
+                if entry["screenshot_id"] == screenshot_id:
+                    entry["annotation"] = annotation_string
+
+            # for entry in self.main_dict["pictureIndex"]:
+            #     if entry["screenshot_id"] == self.user_selected_screenshot:
+            #         entry["annotation"] = self.user_annotation
+            #         print("ADDING ANNOTATION")
+
         # if args.annotation:
 
         return args_present
