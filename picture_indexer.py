@@ -238,6 +238,11 @@ class Picture_indexer:
                 if entry["screenshot_id"] == screenshot_id:
                     entry["annotation"] = annotation_string
 
+            # def _save_selected_files_to_json(self):
+        self.convert_main_dict_paths_to_strings()  # SAVE ANNOTATIONS TO JSON
+        with open("main_dict.json", "w") as file:
+            json.dump(self.main_dict, file, indent=4)
+
             # for entry in self.main_dict["pictureIndex"]:
             #     if entry["screenshot_id"] == self.user_selected_screenshot:
             #         entry["annotation"] = self.user_annotation
