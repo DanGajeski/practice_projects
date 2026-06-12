@@ -4,8 +4,11 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
+from xml.etree.cElementTree import TreeBuilder
 
 from PIL import Image
+
+# JESUS IS LORD
 
 # picture_store = {"pictureIndex": []}
 
@@ -161,18 +164,23 @@ class Picture_indexer:
                 self.user_supplied_end_date["date"] = args.before  # beginning date
                 self.get_dict_entries_by_date_range()
                 args_present = True
+                self.save_main_dict_to_json()
             if args.after:
                 print(f"ONLY AFTER {args.after}.")
                 self.user_supplied_beginning_date["supplied"] = True
                 self.user_supplied_beginning_date["date"] = args.after
                 self.get_dict_entries_by_date_range()
                 args_present = True
+                self.save_main_dict_to_json()
+
             if args.before:
                 print(f"ONLY BEFORE {args.before}.")
                 self.user_supplied_end_date["supplied"] = True
                 self.user_supplied_end_date["date"] = args.before
                 self.get_dict_entries_by_date_range()
                 args_present = True
+                self.save_main_dict_to_json()
+
         else:
             #     self.get_dict_entries_if_no_game_id_specified()  # NO GAME ID SPECIFIED IN COMMAND LINE
 
@@ -185,6 +193,8 @@ class Picture_indexer:
                 self.user_supplied_end_date["date"] = args.before  # beginning date
                 self.get_dict_entries_by_date_range()
                 args_present = True
+                self.save_main_dict_to_json()
+
             elif args.after:
                 self.get_dict_entries_if_no_game_id_specified()
                 print(f"ONLY AFTER {args.after}.")
@@ -192,6 +202,8 @@ class Picture_indexer:
                 self.user_supplied_beginning_date["date"] = args.after
                 self.get_dict_entries_by_date_range()
                 args_present = True
+                self.save_main_dict_to_json()
+
             elif args.before:
                 self.get_dict_entries_if_no_game_id_specified()
                 print(f"ONLY BEFORE {args.before}.")
@@ -199,6 +211,7 @@ class Picture_indexer:
                 self.user_supplied_end_date["date"] = args.before
                 self.get_dict_entries_by_date_range()
                 args_present = True
+                self.save_main_dict_to_json()
 
         self.sort_dict_by_game_and_date()  # takes in self.main_dict["pictureIndex"] and replaces values with all contents SORTED by DATE and GAME
         self._display_selected_screenshots()
@@ -215,12 +228,13 @@ class Picture_indexer:
             else:
                 print("MAIN DICT FILE LOCATION DOES NOT EXIST")
 
-            self.args_present = True
+            args_present = True
         if args.saveall:
             print(f"SAVING SELECTIONS AND ANNOTATIONS TO JSON")
-            self._save_selected_files_to_json_test()
+            # self._save_selected_files_to_json_test()
+            self.save_main_dict_to_json()
             print("SAVING non interactive DATA TO JSON")
-            self.args_present = True
+            args_present = True
 
         if args.annotate:
             print("ANNOTATING")
@@ -238,19 +252,28 @@ class Picture_indexer:
                 if entry["screenshot_id"] == screenshot_id:
                     entry["annotation"] = annotation_string
 
-            # def _save_selected_files_to_json(self):
-        self.convert_main_dict_paths_to_strings()  # SAVE ANNOTATIONS TO JSON
-        with open("main_dict.json", "w") as file:
-            json.dump(self.main_dict, file, indent=4)
+            args_present = True
+            self.save_main_dict_to_json()
 
-            # for entry in self.main_dict["pictureIndex"]:
-            #     if entry["screenshot_id"] == self.user_selected_screenshot:
-            #         entry["annotation"] = self.user_annotation
-            #         print("ADDING ANNOTATION")
+            # def _save_selected_files_to_json(self):
+        # self.convert_main_dict_paths_to_strings()  # SAVE ANNOTATIONS TO JSON
+        # with open("main_dict.json", "w") as file:
+        #     json.dump(self.main_dict, file, indent=4)
+        # self.save_main_dict_to_json()
+
+        # for entry in self.main_dict["pictureIndex"]:
+        #     if entry["screenshot_id"] == self.user_selected_screenshot:
+        #         entry["annotation"] = self.user_annotation
+        #         print("ADDING ANNOTATION")
 
         # if args.annotation:
 
         return args_present
+
+    def save_main_dict_to_json(self):
+        self.convert_main_dict_paths_to_strings()
+        with open("main_dict.json", "w") as file:
+            json.dump(self.main_dict, file, indent=4)
 
     def _delete_all_selected_files(self):
         print("REMOVING GAMEREQUESTED AND DATEREQUESTED")
@@ -326,6 +349,7 @@ class Picture_indexer:
             ]
 
     def run_picture_indexer_main_loop(self):  # BEGINS INTERACTIVE MODE
+        print(self.args_present)
         if not (
             self.args_present
         ):  # ONLY RUN INTERACTIVE VERSION OF PROGRAM IF NO ARGS PRESENT
@@ -529,7 +553,7 @@ class Picture_indexer:
         self,
     ):  # for INTERACTIVE mode, gets user input and decides what to do with it
         self.unprocessed_user_input = input(
-            "Please pick an option: (type 1 for option 1., etc) \n1. Save and Quit.\n2. Display all screenshots\n3. Display selected screenshots.\n4. Select screenshots by game and/or date.\n5. Select screenshot to annotate.\n6. Select and view screenshot. \nYour response: "
+            "Please pick an option: (type 1 for option 1., etc) \n1. Save and Quit.\n2. Display all screenshots\n3. Display selected screenshots.\n4. Select screenshots by game and/or date.\n5. Select screenshot to annotate.\n6. Select and view screenshot. \n7. Delete all selected screenshots. \nYour response: "
         )
         if self.unprocessed_user_input == "1":
             # SAVE JSON HERE
@@ -546,6 +570,8 @@ class Picture_indexer:
             self._select_and_annotate_screenshot()  # selects screenshot by ID, then allows user to submit annotation for entry
         elif self.unprocessed_user_input == "6":
             self._select_and_display_screenshot_in_default_app()  # selects screenshot by ID, then displays screenshot in default windows app
+        elif self.unprocessed_user_input == "7":
+            self._delete_all_selected_files()
 
     def format_time(
         self, unformatted_time
