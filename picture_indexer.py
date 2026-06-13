@@ -125,6 +125,11 @@ class Picture_indexer:
             help="Annotate selected screenshot",
         )
         parser.add_argument(
+            "--deleteannotation",
+            action="store",
+            help="Deletes an annotation with a screenshot id",
+        )
+        parser.add_argument(
             "--saveall", action="store", help="Saves selections and annotations"
         )
         parser.add_argument(
@@ -255,6 +260,16 @@ class Picture_indexer:
             args_present = True
             self.save_main_dict_to_json()
 
+        if args.deleteannotation:
+            print(f"DELETING ANNOTATION OF SCREENSHOT ID: {args.deleteannotation}.")
+
+            for entry in self.main_dict["pictureIndex"]:
+                if entry["screenshot_id"] == args.deleteannotation:
+                    entry["annotation"] = ""
+
+            self.save_main_dict_to_json()
+            args_present = True
+
             # def _save_selected_files_to_json(self):
         # self.convert_main_dict_paths_to_strings()  # SAVE ANNOTATIONS TO JSON
         # with open("main_dict.json", "w") as file:
@@ -272,6 +287,7 @@ class Picture_indexer:
 
     def save_main_dict_to_json(self):
         self.convert_main_dict_paths_to_strings()
+        print("SAVING MAIN DICT NOWWWWWWWWWWWWWWWWWWWWWWWWWW")
         with open("main_dict.json", "w") as file:
             json.dump(self.main_dict, file, indent=4)
 
